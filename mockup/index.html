@@ -231,6 +231,7 @@ const ROLES = [
   { id: "agent", label: "Agent", who: "Jamie Alvarez · Aspen" },
   { id: "assistant", label: "Assistant", who: "Casey Lin · assists Jamie Alvarez and Morgan Reyes" },
   { id: "tc", label: "Transaction Coordinator", who: "Petrina · TC for Jamie, Morgan and Taylor" },
+  { id: "frontdesk", label: "Front Desk", who: "Alex (example) · Front desk, all offices" },
   { id: "accounting", label: "Accounting", who: "Accounting · accounting@aspensnowmasssir.com" },
   { id: "leadership", label: "Leadership", who: "Will McCullough · view only" }
 ];
@@ -353,7 +354,7 @@ const short = s => { const d = new Date(s + "T12:00:00"); return d.toLocaleDateS
 const todayShort = short(TODAY);
 const deal = id => S.deals.find(d => d.id === +id);
 const agentName = d => PEOPLE[d.agent].name;
-const actor = () => ({ agent: "Jamie", assistant: "Casey", tc: "Petrina", accounting: "Accounting", leadership: "Will" }[S.role]);
+const actor = () => ({ agent: "Jamie", assistant: "Casey", tc: "Petrina", frontdesk: "Alex (front desk)", accounting: "Accounting", leadership: "Will" }[S.role]);
 
 function defsFor(d) {
   const base = d.type === "listing" ? LISTING_ITEMS : TX_ITEMS;
@@ -443,6 +444,7 @@ function render() {
   if (v.name === "deal" && deal(v.id) && visibleDeals().includes(deal(v.id))) html = renderDeal(deal(v.id));
   else if (S.role === "agent" || S.role === "assistant") html = renderAgentHome();
   else if (S.role === "tc") html = renderTcHome();
+  else if (S.role === "frontdesk") html = renderFrontHome();
   else if (S.role === "accounting") html = renderAcctHome();
   else html = renderLeaderHome();
   $("#app").innerHTML = html;
@@ -536,9 +538,9 @@ function renderDeal(d) {
   // Side panels
   let side = "";
   if (d.type === "listing") {
-    side += `<div class="panel"><div class="panel-h"><h3>Office tasks</h3><span class="small muted">From the listing checklist</span></div><div class="panel-b">
+    side += `<div class="panel"><div class="panel-h"><h3>Office tasks</h3><span class="small muted">Done by the front desk</span></div><div class="panel-b">
       ${p.complete ? "" : `<p class="small muted" style="margin-bottom:10px">These start once every listing document is approved.</p>`}
-      <div class="checks">${OFFICE_TASKS.map((t, i) => `<label><input type="checkbox" data-act="task" data-id="${d.id}" data-i="${i}" ${d.tasks && d.tasks[i] ? "checked" : ""} ${isTc && p.complete ? "" : "disabled"}> ${esc(t)}</label>`).join("")}</div>
+      <div class="checks">${OFFICE_TASKS.map((t, i) => `<label><input type="checkbox" data-act="task" data-id="${d.id}" data-i="${i}" ${d.tasks && d.tasks[i] ? "checked" : ""} ${role === "frontdesk" && p.complete ? "" : "disabled"}> ${esc(t)}</label>`).join("")}</div>
       ${isAgentSide && p.complete ? `<div style="margin-top:14px"><button class="btn sm" data-act="amend" data-id="${d.id}">Amend or extend this listing</button></div>` : ""}
     </div></div>`;
   } else {
@@ -566,9 +568,9 @@ function renderDeal(d) {
       ${action ? `<div style="margin-top:12px">${action}</div>` : ""}
     </div></div>`;
   }
-  side += `<div class="panel"><div class="panel-h"><h3>Activity</h3></div><div class="panel-b"><ul class="log">${(d.log || []).slice().reverse().map(l => `<li><span class="muted num">${esc(l[0])}</span><span>${esc(l[1])}</span></li>`).join("")}</ul></div></div>`;
+  side += `<div class="panel"><div class="panel-h"><h3>Activity log</h3><span class="small muted">Every change, who made it</span></div><div class="panel-b"><ul class="log">${(d.log || []).slice().reverse().map(l => `<li><span class="muted num">${esc(l[0])}</span><span>${esc(l[1])}</span></li>`).join("")}</ul></div></div>`;
 
-  const tcEntry = isTc && !d.dash ? `<div class="panel"><div class="panel-b row between"><div><b>New deal: enter it in dash</b><div class="small muted">Everything you need is on this page. Type the dash transaction number when you're done.</div></div>
+  const tcEntry = (isTc || role === "frontdesk") && !d.dash ? `<div class="panel"><div class="panel-b row between"><div><b>New deal: enter it in dash</b><div class="small muted">Everything you need is on this page. Type the dash transaction number when you're done.</div></div>
     <div class="row"><input id="dash-${d.id}" placeholder="dash #" class="num" style="border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:110px;background:var(--surface)"><button class="btn primary" data-act="dash" data-id="${d.id}">Save</button></div></div></div>` : "";
 
   return `<div class="stack">
@@ -599,7 +601,7 @@ function renderTcHome() {
   const adviceNeeded = list.filter(d => d.type !== "listing" && progress(d).complete && !d.advice);
   const crfs = list.filter(d => d.crf && d.crf.status === "submitted");
   const tasks = list.filter(d => d.type === "listing" && progress(d).complete && !OFFICE_TASKS.every((_, i) => d.tasks && d.tasks[i]));
-  const tabs = [["review", "Documents to review", reviewItems.length], ["new", "Enter in dash", newDeals.length], ["advice", "Title advice", adviceNeeded.length], ["crf", "CRFs to approve", crfs.length], ["tasks", "Listing tasks", tasks.length], ["all", "All deals", list.length]];
+  const tabs = [["review", "Documents to review", reviewItems.length], ["new", "Enter in dash", newDeals.length], ["advice", "Title advice", adviceNeeded.length], ["crf", "CRFs to approve", crfs.length], ["all", "All deals", list.length]];
   let body = "";
   if (tab === "review") {
     body = reviewItems.length ? `<div class="tablewrap"><table><thead><tr><th>Document</th><th>Deal</th><th>Agent</th><th>Submitted</th><th></th></tr></thead><tbody>` + reviewItems.map(r => `<tr>
@@ -613,7 +615,6 @@ function renderTcHome() {
   } else if (tab === "new") body = dealRows(newDeals, { showAgent: true, tc: true, empty: "No new deals to enter in dash." });
   else if (tab === "advice") body = adviceNeeded.length ? `<div class="empty" style="padding-bottom:0">These files are complete. When the title advice arrives, upload it to the deal and the agent is told to submit their CRF.</div>` + dealRows(adviceNeeded, { showAgent: true }) : `<div class="empty">No complete files waiting on a title advice.</div>`;
   else if (tab === "crf") body = dealRows(crfs, { showAgent: true, empty: "No commission requests waiting on you." });
-  else if (tab === "tasks") body = dealRows(tasks, { showAgent: true, empty: "No listing tasks outstanding." });
   else body = dealRows(list, { showAgent: true, tc: true });
 
   return `<div class="stack">
@@ -649,6 +650,40 @@ function renderAcctHome() {
   </div>`;
 }
 
+function activityFeed(list, limit) {
+  const all = [];
+  list.forEach(d => (d.log || []).forEach((l, i) => all.push({ d: d, when: l[0], text: l[1], order: i })));
+  const ts = w => new Date(w + (/\d{4}/.test(w) ? "" : ", 2026")).getTime() || 0;
+  all.sort((a, b) => ts(b.when) - ts(a.when) || b.order - a.order);
+  const rows = all.slice(0, limit || 60);
+  return rows.length ? `<div class="tablewrap"><table><thead><tr><th>When</th><th>Deal</th><th>What changed</th></tr></thead><tbody>` + rows.map(x => `<tr class="click" data-act="open" data-id="${x.d.id}"><td class="num muted" style="white-space:nowrap">${esc(x.when)}</td><td><b>${esc(x.d.address)}</b><div class="small muted">${TYPE_LABEL[x.d.type]} · ${esc(agentName(x.d))}</div></td><td>${esc(x.text)}</td></tr>`).join("") + `</tbody></table></div>` : `<div class="empty">No activity yet.</div>`;
+}
+
+function renderFrontHome() {
+  const list = S.deals;
+  const tab = view().tab || "dash";
+  const newDeals = list.filter(d => !d.dash);
+  const tasks = list.filter(d => d.type === "listing" && progress(d).complete && !OFFICE_TASKS.every((_, i) => d.tasks && d.tasks[i]));
+  const tabs = [["dash", "Enter in dash", newDeals.length], ["tasks", "Listing tasks", tasks.length], ["all", "All deals", list.length], ["activity", "Activity log", null]];
+  let body;
+  if (tab === "dash") body = dealRows(newDeals, { showAgent: true, empty: "No new deals waiting to be entered in dash." });
+  else if (tab === "tasks") body = tasks.length ? `<div class="empty" style="padding-bottom:0">Every listing document is approved on these. Work through the MLS, Crest, brochure, ICM and the rest, and check each one off.</div>` + dealRows(tasks, { showAgent: true }) : `<div class="empty">No listing tasks outstanding.</div>`;
+  else if (tab === "all") body = dealRows(list, { showAgent: true });
+  else body = activityFeed(list);
+  return `<div class="stack">
+    <div><h1>Front desk</h1><p class="muted">Every deal at every office. You enter new deals in dash and handle the listing tasks once a listing's documents are approved.</p></div>
+    <div class="attn">
+      <div class="cell ${newDeals.length ? "hot" : ""}"><div class="label">Enter in dash</div><div class="big num">${newDeals.length}</div><div class="small muted">New deals</div></div>
+      <div class="cell"><div class="label">Listing tasks</div><div class="big num">${tasks.length}</div><div class="small muted">Listings ready for MLS work</div></div>
+      <div class="cell"><div class="label">Open deals</div><div class="big num">${list.filter(d => stage(d)[0] !== "Paid").length}</div><div class="small muted">All offices</div></div>
+    </div>
+    <div class="panel">
+      <div class="tabs" role="tablist" style="padding-left:12px;padding-right:12px">${tabs.map(t => `<button role="tab" aria-selected="${tab === t[0]}" data-act="tab" data-tab="${t[0]}">${t[1]}${t[2] == null ? "" : `<span class="count ${t[2] && t[0] === "dash" ? "hot" : ""}">${t[2]}</span>`}</button>`).join("")}</div>
+      ${body}
+    </div>
+  </div>`;
+}
+
 function renderLeaderHome() {
   const office = view().office || "All offices";
   const offices = ["All offices", "Aspen", "Snowmass", "Basalt", "Carbondale", "Glenwood Springs"];
@@ -668,6 +703,7 @@ function renderLeaderHome() {
     <div class="panel"><div class="tablewrap"><table><thead><tr><th>Deal</th><th>Agent</th><th>Office</th><th>TC</th><th>Status</th><th>Progress</th></tr></thead><tbody>
       ${list.map(d => { const p = progress(d), [s, t] = stage(d); return `<tr class="click" data-act="open" data-id="${d.id}"><td><b>${esc(d.address)}</b><div class="small muted">${esc(d.city)} · ${TYPE_LABEL[d.type]}</div></td><td>${esc(agentName(d))}</td><td>${esc(PEOPLE[d.agent].office)}</td><td>${esc(TCS[PEOPLE[d.agent].tc])}</td><td>${pill(s, t)}</td><td class="num">${p.done}/${p.total}</td></tr>`; }).join("")}
     </tbody></table></div></div>
+    <div class="panel"><div class="panel-h"><h3>Activity log</h3><span class="small muted">Every change on every deal, newest first</span></div>${activityFeed(list, 25)}</div>
   </div>`;
 }
 
@@ -900,7 +936,7 @@ document.addEventListener("click", e => {
     case "reject-send": { const note = val("rj-note"); if (!note) { $("#rj-err").hidden = false; return; } const def = defsFor(d).find(x => x.key === key);
       setItem(d, key, { status: d.items[key] && d.items[key].status === "na-req" ? "missing" : "rejected", note: note }); if (d.items[key].status === "missing") d.items[key].note = "";
       addLog(d, `Petrina returned the ${def.name}: ${note}`); closeModal(); save(); render(); toast(agentName(d).split(" ")[0] + " was emailed with your note."); break; }
-    case "dash": { const v = val("dash-" + d.id); if (!v) { toast("Type the dash transaction number first."); return; } d.dash = v; addLog(d, `Petrina entered it in dash (#${v})`); save(); render(); toast("Saved. The deal is out of your dash queue."); break; }
+    case "dash": { const v = val("dash-" + d.id); if (!v) { toast("Type the dash transaction number first."); return; } d.dash = v; addLog(d, `${actor()} entered it in dash (#${v})`); save(); render(); toast("Saved. The deal is out of the dash queue."); break; }
     case "amend": d.extra.push({ key: "amend" + (d.extra.length + 1), name: "Listing Amendment/Extension" + (d.extra.length ? " #" + (d.extra.length + 1) : ""), hint: "Signed amendment or extension. The office tasks will be redone for the change." });
       OFFICE_TASKS.forEach((_, i) => { if (i !== 7) d.tasks[i] = false; }); addLog(d, `${actor()} started a listing change`); save(); render(); toast("Change started. Upload the signed amendment or extension."); break;
     case "advice": adviceModal(d); break;
@@ -923,7 +959,7 @@ document.addEventListener("click", e => {
 document.addEventListener("change", e => {
   const t = e.target;
   if (t.name === "dtype") syncNewDeal();
-  if (t.dataset && t.dataset.act === "task") { const d = deal(t.dataset.id); d.tasks[t.dataset.i] = t.checked; if (t.checked) addLog(d, `Petrina: ${OFFICE_TASKS[t.dataset.i]}`); save(); render(); }
+  if (t.dataset && t.dataset.act === "task") { const d = deal(t.dataset.id); d.tasks[t.dataset.i] = t.checked; addLog(d, `${actor()} ${t.checked ? "checked" : "unchecked"} "${OFFICE_TASKS[t.dataset.i]}"`); save(); render(); }
   if (t.dataset && t.dataset.act === "office") { S.views.leadership = { name: "home", office: t.value }; save(); render(); }
   if (t.id === "file-picker" && pendingUpload) {
     const f = t.files[0]; if (!f) return;

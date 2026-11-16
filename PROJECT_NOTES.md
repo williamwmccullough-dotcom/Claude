@@ -40,6 +40,7 @@ Running record of decisions and context so every session starts from the same pl
 - **Assistants:** an agent assigns them once and they get **standing access to all of that agent's deals**. They can open new deals and amend existing ones without asking the agent each time. One assistant can work for **several agents**.
 - **Co-agents** are added **deal by deal**. They only see the deals they're added to.
 - **TC assignment:** by office, then by agent. Each agent has a TC.
+- **Front desk staff:** see **every deal** (to start). They enter deals into dash and the MLS and do the listing office tasks (MLS, Crest, brochure, ICM, showing instructions, B2B, admin email, advertising).
 - **Staff with access:** owner, managing broker, VP, director of sales, accounting, and (later) rentals TCs.
   - Staff can **view** deals only. **Only TCs approve documents.**
   - **Accounting sees completed files only.**
@@ -58,6 +59,9 @@ Running record of decisions and context so every session starts from the same pl
 - Both CRF approvals (TC and accounting) are recorded on the deal, so everyone can see where payment stands.
 - Exception to "only TCs approve": **accounting approves CRFs** (and only CRFs).
 
+## Activity log
+- Every change on every deal is logged with who and when. Each deal shows its own log; front desk and leadership also see a company-wide feed.
+
 ## Notifications
 - Email and in-app reminders, **every other day**, listing the missing and rejected documents.
 
@@ -69,7 +73,8 @@ Running record of decisions and context so every session starts from the same pl
 - Keep wire instructions and bank info out of the app.
 - Sign-in uses company Microsoft accounts. Only `aspensnowmasssir.com` addresses can log in.
 
-## Source documents (from owner, Nov 2026; may be out of date)
+## Source documents (from owner, Nov 2026)
+**All forms and checklists below are outdated placeholders.** The owner is sending current versions. The Closing Checklist (agent to-do list) is **out of scope**: the app is only about collecting the correct document package for each deal.
 Kept out of the repo because the examples contain real client data. Summarized here.
 - **New-listing intake forms:** Residential Listing Form (dash), MLS Input Form (Aspen Glenwood MLS), Information Form (marketing/brochure/showing), Listing Checklist.
 - **Listing Checklist office tasks:** entered into MLS, Crest, brochure created and ordered, ICM, showing instructions, B2B, admin email, advertising. Changes (amend/extend) redo MLS, brochure, B2B, Crest, admin email, ICM.
@@ -84,7 +89,8 @@ Kept out of the repo because the examples contain real client data. Summarized h
 - `mockup/index.html` — clickable prototype with example data (published as a private artifact).
 
 ## Open items
-- [ ] Owner to provide: document checklists for each sales deal type and all blank forms, including the CRF.
+- [ ] Owner to provide: current checklists and blank forms for each sales deal type, including the CRF (coming).
+- [ ] Clarify: who enters new deals in dash, the front desk or the TCs (mockup lets both).
 - [ ] Owner to provide: the exact Dropbox folder naming sequence.
 - [ ] Pick pilot agents and a pilot TC.
 - [ ] Confirm Colorado record-retention requirements with counsel or the Colorado Real Estate Commission.
