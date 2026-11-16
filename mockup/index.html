@@ -1,0 +1,941 @@
+<title>ASSIR Deal Desk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky brand bar + role switcher, then one working column (list → deal detail), modals for forms. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #eef0f4;
+  --fg: #141a26;
+  --muted: #5b6475;
+  --line: #dde1e8;
+  --navy: #0e2a4d;
+  --navy-fg: #ffffff;
+  --accent: #1f5fa8;
+  --accent-soft: #e3ecf8;
+  --ok: #1d7a4a; --ok-soft: #e1f2e8;
+  --warn: #9a6200; --warn-soft: #fbefd6;
+  --bad: #b3322b; --bad-soft: #fbe3e1;
+  --info: #3b5a8c; --info-soft: #e5ebf5;
+  --display: "Newsreader", Georgia, "Times New Roman", serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius: 8px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f131a; --surface: #171c25; --surface-2: #1f2531; --fg: #e8ebf1; --muted: #9aa3b4; --line: #2c3441;
+  --navy: #0b1b31; --navy-fg: #eef2f8; --accent: #7fb0ee; --accent-soft: #1d2c44;
+  --ok: #6fcf98; --ok-soft: #173326; --warn: #e8b45a; --warn-soft: #3a2c12; --bad: #f08a83; --bad-soft: #3d1c1a; --info: #9db7e0; --info-soft: #1e2a3e;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f131a; --surface: #171c25; --surface-2: #1f2531; --fg: #e8ebf1; --muted: #9aa3b4; --line: #2c3441;
+  --navy: #0b1b31; --navy-fg: #eef2f8; --accent: #7fb0ee; --accent-soft: #1d2c44;
+  --ok: #6fcf98; --ok-soft: #173326; --warn: #e8b45a; --warn-soft: #3a2c12; --bad: #f08a83; --bad-soft: #3d1c1a; --info: #9db7e0; --info-soft: #1e2a3e;
+  color-scheme: dark }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 14px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--navy); }
+.gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1080px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: 1.75rem; } h2 { font-size: 1.35rem; } h3 { font-size: 1.1rem; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+
+/* Header */
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--navy); color: var(--navy-fg); }
+.brand { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 12px 8px; flex-wrap: wrap; }
+.brand-name { font-family: var(--display); font-size: 1.3rem; font-weight: 600; letter-spacing: 0.01em; }
+.brand-sub { font-size: 0.75rem; opacity: 0.75; letter-spacing: 0.04em; }
+.roles { display: flex; gap: 4px; overflow-x: auto; padding-block: 0 10px; scrollbar-width: none; }
+.roles button { background: transparent; border: 1px solid rgba(255,255,255,0.22); color: var(--navy-fg); border-radius: 999px; padding: 6px 12px; cursor: pointer; white-space: nowrap; font-size: 0.82rem; }
+.roles button[aria-pressed="true"] { background: var(--navy-fg); color: var(--navy); border-color: var(--navy-fg); font-weight: 600; }
+.demo-note { background: var(--warn-soft); color: var(--warn); font-size: 0.8rem; }
+.demo-note .wrap { padding-block: 6px; display: flex; gap: 12px; justify-content: space-between; flex-wrap: wrap; align-items: center; }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; font-size: inherit; }
+.demo-note .linkbtn { color: var(--warn); }
+
+main { padding-block: 24px 64px; }
+.stack { display: flex; flex-direction: column; gap: 20px; }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.between { justify-content: space-between; }
+
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 14px; cursor: pointer; font-weight: 500; font-size: 0.88rem; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn.ok { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.btn.danger { color: var(--bad); }
+.btn.sm { padding: 4px 10px; font-size: 0.8rem; }
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.panel-h { padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.panel-b { padding: 14px 18px; }
+.empty { padding: 18px; color: var(--muted); font-size: 0.9rem; }
+
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.t-ok { background: var(--ok-soft); color: var(--ok); }
+.t-warn { background: var(--warn-soft); color: var(--warn); }
+.t-bad { background: var(--bad-soft); color: var(--bad); }
+.t-info { background: var(--info-soft); color: var(--info); }
+.t-muted { background: var(--surface-2); color: var(--muted); }
+.tag { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.tag.dual { background: var(--accent-soft); color: var(--accent); }
+
+/* Attention strip */
+.attn { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.attn .cell { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; }
+.attn .big { font-family: var(--display); font-size: 1.9rem; line-height: 1.1; }
+.attn .cell.hot { border-color: var(--bad); }
+.attn .cell.hot .big { color: var(--bad); }
+
+/* Deal list */
+.deals { display: flex; flex-direction: column; }
+.deal-row { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.4fr) minmax(120px, 1fr) auto; gap: 16px; align-items: center; padding: 14px 18px; border-top: 1px solid var(--line); cursor: pointer; background: none; border-left: 0; border-right: 0; border-bottom: 0; text-align: left; width: 100%; }
+.deal-row:first-child { border-top: 0; }
+.deal-row:hover { background: var(--surface-2); }
+.addr { font-weight: 600; }
+.bar { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.bar.done > span { background: var(--ok); }
+@media (max-width: 720px) {
+  .deal-row { grid-template-columns: 1fr; gap: 8px; }
+}
+
+/* Deal detail */
+.back { margin-bottom: 4px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px 24px; }
+.facts div { min-width: 0; }
+.facts .v { font-weight: 500; overflow-wrap: anywhere; }
+.path { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; background: var(--surface-2); padding: 6px 10px; border-radius: 4px; overflow-x: auto; white-space: nowrap; }
+.items { display: flex; flex-direction: column; }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; padding: 12px 18px; border-top: 1px solid var(--line); align-items: start; }
+.item:first-child { border-top: 0; }
+.item .name { font-weight: 600; }
+.item .hint { color: var(--muted); font-size: 0.83rem; }
+.item .file { font-size: 0.8rem; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
+.item .note { margin-top: 6px; font-size: 0.83rem; background: var(--bad-soft); color: var(--bad); padding: 6px 10px; border-radius: 4px; }
+.item .note.info { background: var(--info-soft); color: var(--info); }
+.item .acts { display: flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+.item.na { opacity: 0.6; }
+@media (max-width: 560px) { .item { grid-template-columns: 1fr; } .item .acts { justify-content: flex-start; } }
+.two { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .two { grid-template-columns: 1fr; } }
+.log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 0.83rem; }
+.log li { display: grid; grid-template-columns: 70px 1fr; gap: 8px; }
+.steps { display: flex; flex-direction: column; gap: 0; list-style: none; padding: 0; margin: 0; }
+.steps li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding-block: 6px; font-size: 0.86rem; }
+.steps .dot { width: 14px; height: 14px; margin-top: 3px; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); }
+.steps li.done .dot { background: var(--ok); border-color: var(--ok); }
+.steps li.now .dot { border-color: var(--accent); background: var(--accent-soft); }
+.steps li.now { font-weight: 600; }
+.checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.checks label { display: flex; gap: 8px; align-items: center; font-size: 0.88rem; }
+
+/* Tables */
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+tr.click { cursor: pointer; } tr.click:hover td { background: var(--surface-2); }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; cursor: pointer; color: var(--muted); font-weight: 500; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.count { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--surface-2); font-size: 0.75rem; text-align: center; margin-left: 4px; }
+.count.hot { background: var(--bad-soft); color: var(--bad); }
+
+/* Modal */
+.scrim { position: fixed; inset: 0; background: rgba(10, 16, 28, 0.55); z-index: 20; display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; padding: max(24px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px)); }
+.modal { background: var(--surface); border-radius: 10px; width: 100%; max-width: 640px; border: 1px solid var(--line); }
+.modal.wide { max-width: 820px; }
+.modal-h { padding: 16px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.modal-b { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.modal-f { padding: 14px 20px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.x { background: none; border: 0; font-size: 1.4rem; line-height: 1; cursor: pointer; color: var(--muted); }
+.fgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+.fgrid .full { grid-column: 1 / -1; }
+@media (max-width: 560px) { .fgrid { grid-template-columns: 1fr; } }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field label { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+.field input, .field select, .field textarea { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 8px 10px; width: 100%; }
+.field textarea { min-height: 72px; resize: vertical; }
+.field .pre { font-size: 0.72rem; color: var(--accent); font-weight: 600; }
+.types { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.types label { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.types input { position: absolute; opacity: 0; pointer-events: none; }
+.types label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.types label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.types label.off { opacity: 0.55; cursor: not-allowed; }
+.types b { font-size: 0.9rem; }
+.types span { font-size: 0.76rem; color: var(--muted); }
+.fills { display: flex; flex-wrap: wrap; gap: 6px; }
+.callout { background: var(--accent-soft); color: var(--fg); border-radius: 6px; padding: 10px 12px; font-size: 0.85rem; }
+.err { color: var(--bad); font-size: 0.83rem; }
+.calc { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; font-size: 0.88rem; }
+.calc .tot { font-weight: 700; border-top: 1px solid var(--line); padding-top: 6px; }
+.email { border: 1px solid var(--line); border-radius: 6px; font-size: 0.86rem; }
+.email .eh { padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--surface-2); display: flex; flex-direction: column; gap: 2px; }
+.email .eb { padding: 12px 14px; white-space: pre-wrap; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 8px; z-index: 30; font-size: 0.88rem; max-width: calc(100% - 32px); }
+@media (prefers-reduced-motion: no-preference) { .toast { animation: rise .2s ease-out; } @keyframes rise { from { transform: translate(-50%, 8px); opacity: 0; } } }
+</style>
+
+<header class="top">
+  <div class="gutter"><div class="wrap">
+    <div class="brand">
+      <div>
+        <div class="brand-name">ASSIR Deal Desk</div>
+        <div class="brand-sub">Aspen Snowmass Sotheby's International Realty</div>
+      </div>
+      <div class="brand-sub" id="whoami"></div>
+    </div>
+    <div class="roles" id="roles" role="group" aria-label="View the app as"></div>
+  </div></div>
+</header>
+<div class="demo-note gutter"><div class="wrap">
+  <span><b>Mockup with example data.</b> Properties and people are made up. Uploads go nowhere. Switch roles above to see each person's view.</span>
+  <button class="linkbtn" data-act="reset">Reset example data</button>
+</div></div>
+<main class="gutter"><div class="wrap" id="app"></div></main>
+<div id="modal-root"></div>
+<input type="file" id="file-picker" accept="application/pdf,.pdf" hidden>
+
+<script>
+(function () {
+"use strict";
+
+// ---------- Reference data ----------
+const TODAY = "2026-11-16";
+const PEOPLE = {
+  jamie:  { name: "Jamie Alvarez", office: "Aspen", tc: "petrina", split: 0.9 },
+  morgan: { name: "Morgan Reyes", office: "Aspen", tc: "petrina", split: 0.85 },
+  taylor: { name: "Taylor Brooks", office: "Basalt", tc: "petrina", split: 0.8 },
+  riley:  { name: "Riley Chen", office: "Snowmass", tc: "dana", split: 0.8 },
+  quinn:  { name: "Quinn Harper", office: "Glenwood Springs", tc: "dana", split: 0.75 }
+};
+const TCS = { petrina: "Petrina", dana: "Dana (example TC)" };
+const ROLES = [
+  { id: "agent", label: "Agent", who: "Jamie Alvarez · Aspen" },
+  { id: "assistant", label: "Assistant", who: "Casey Lin · assists Jamie Alvarez and Morgan Reyes" },
+  { id: "tc", label: "Transaction Coordinator", who: "Petrina · TC for Jamie, Morgan and Taylor" },
+  { id: "accounting", label: "Accounting", who: "Accounting · accounting@aspensnowmasssir.com" },
+  { id: "leadership", label: "Leadership", who: "Will McCullough · view only" }
+];
+const CITIES = ["Aspen", "Snowmass Village", "Basalt", "Carbondale", "Glenwood Springs", "Woody Creek", "Old Snowmass"];
+const PROP_TYPES = ["Single family", "Condominium", "Townhouse", "Duplex", "Vacant land", "Ranch / acreage"];
+const TITLE_COS = ["Land Title Guarantee", "Title Company of the Rockies", "Stewart Title", "Other"];
+const TYPE_LABEL = { listing: "Listing", seller: "Seller side", buyer: "Buyer side" };
+
+const LISTING_ITEMS = [
+  { key: "listing_contract", name: "Exclusive Right-to-Sell Listing Contract", hint: "Fully signed by every seller and by you, with any addenda." },
+  { key: "dash_form", name: "Residential Listing Form (dash)", hint: "Mostly filled in from what you entered when you opened this deal. Add the features and remarks, then submit.", prefill: true },
+  { key: "mls_form", name: "MLS Input Form (Aspen Glenwood MLS)", hint: "Address, price, beds and baths are already filled in from this deal.", prefill: true },
+  { key: "info_form", name: "Information Form (marketing)", hint: "Every line must be complete and high-resolution photos must be available for the brochure, ads, B2B and website.", prefill: true }
+];
+const OFFICE_TASKS = ["Entered into MLS", "Entered into Crest", "Brochure created and ordered", "Entered into ICM", "Showing instructions entered", "B2B sent", "Admin email sent", "Advertising"];
+
+const TX_ITEMS = [
+  { key: "uc_form", name: "Under Contract Form", hint: "Filled in from this deal. Replaces emailing the form to your TC.", prefill: true },
+  { key: "contract", name: "Contract to Buy and Sell", hint: "Fully executed, including every counterproposal and addendum.", shared: true },
+  { key: "agency", name: "Agency Disclosure or Buyer Agency Contract", cond: d => d.type === "buyer" && !d.inHouse, na: "Not needed: it's our listing" },
+  { key: "listing_contract", name: "Listing Contract", hint: "Copied from the listing file when the deals are linked.", cond: d => d.type === "seller", na: "Not needed: not our listing" },
+  { key: "mls_sheet", name: "MLS Listing Sheet" },
+  { key: "brochure", name: "Brochure", cond: d => d.type === "seller", na: "Not needed: not our listing" },
+  { key: "em_receipt", name: "Earnest Money Receipt from title company", shared: true },
+  { key: "em_copy", name: "Copy of earnest money check or wire", shared: true },
+  { key: "title_commit", name: "Title Commitment", shared: true },
+  { key: "spd", name: "Seller's Property Disclosure", hint: "Fully executed.", shared: true },
+  { key: "sqft", name: "Square Footage Disclosure", hint: "Fully executed.", cond: d => d.propType !== "Vacant land", na: "Not needed on vacant land", shared: true },
+  { key: "lbp", name: "Lead-Based Paint Disclosure", hint: "Required for anything built before 1978.", cond: d => d.yearBuilt && +d.yearBuilt < 1978, na: "Not needed: built 1978 or later", shared: true },
+  { key: "insp_report", name: "Inspection Report", optional: true },
+  { key: "insp_obj", name: "Inspection Objection and Inspection Resolution", optional: true, shared: true },
+  { key: "inventory", name: "Inventory List", optional: true, shared: true },
+  { key: "amend", name: "Amend/Extend Agreements", hint: "Every amend/extend signed during the deal.", optional: true, shared: true },
+  { key: "closing_instr", name: "Closing Instructions", hint: "Broker-generated version signed by buyer, seller, listing broker and title company.", shared: true },
+  { key: "closing_docs", name: "Closing Documents", hint: "Settlement statement and closing package.", shared: true },
+  { key: "funds", name: "Copy of closing funds check or wire receipt", shared: true }
+];
+
+// ---------- Example data ----------
+function allApproved(type, extra) {
+  const defs = type === "listing" ? LISTING_ITEMS : TX_ITEMS;
+  const o = {};
+  defs.forEach(d => { o[d.key] = { status: "approved", file: d.name + ".pdf", by: "agent", date: "2026-10-20" }; });
+  return Object.assign(o, extra || {});
+}
+function st(status, extra) { return Object.assign({ status: status, date: "2026-11-12" }, extra || {}); }
+
+function seed() {
+  return {
+    role: "agent",
+    views: {},
+    nextId: 20,
+    team: { jamie: ["Casey Lin"], morgan: ["Casey Lin"] },
+    deals: [
+      { id: 1, type: "listing", agent: "jamie", address: "100 Sample Way, Unit 4", city: "Aspen", propType: "Condominium", yearBuilt: "1984", price: 2950000, sellers: "Example Seller Trust", buyers: "", mls: "", dash: "5101", coAgents: [], opened: "2026-11-09",
+        items: {
+          listing_contract: st("approved", { file: "Listing Contract - signed.pdf" }),
+          dash_form: st("approved", { file: "Residential Listing Form (generated).pdf" }),
+          mls_form: st("submitted", { file: "MLS Input Form (generated).pdf" }),
+          info_form: st("rejected", { file: "Information Form.pdf", note: "Brochure titles and highlights are blank. Every line has to be complete before marketing can build the brochure." })
+        }, tasks: {}, extra: [],
+        log: [["Nov 9", "Jamie opened the listing"], ["Nov 10", "Petrina entered it in dash (#5101)"], ["Nov 12", "Petrina returned the Information Form"]] },
+      { id: 2, type: "seller", agent: "jamie", address: "42 Example Court", city: "Snowmass Village", propType: "Single family", yearBuilt: "1972", price: 4100000, sellers: "R. and K. Sample", buyers: "Placeholder Holdings LLC", mls: "190311", dash: "3877", coAgents: ["Morgan Reyes"], titleCo: "Land Title Guarantee", contractDate: "2026-10-28", closingDate: "2026-12-15", opened: "2026-10-28",
+        items: {
+          uc_form: st("approved"), contract: st("approved", { file: "Contract + Counterproposal 1.pdf" }), listing_contract: st("approved", { file: "Listing Contract (from listing file).pdf" }), mls_sheet: st("approved"), brochure: st("approved"),
+          em_receipt: st("approved"), em_copy: st("submitted", { file: "EM wire confirmation.pdf" }), spd: st("approved"),
+          lbp: st("rejected", { file: "Lead Paint Disclosure.pdf", note: "Buyer's initials are missing on page 2." }),
+          inventory: st("na-req", { note: "Jamie: no personal property is included in the sale." })
+        }, extra: [],
+        log: [["Oct 28", "Jamie opened the deal"], ["Oct 29", "Petrina entered it in dash (#3877)"], ["Nov 12", "Petrina returned the Lead-Based Paint Disclosure"]] },
+      { id: 3, type: "buyer", agent: "jamie", address: "7 Demo Ranch Road", city: "Carbondale", propType: "Vacant land", yearBuilt: "", price: 875000, sellers: "Outside listing seller", buyers: "T. Example", mls: "190455", dash: "", inHouse: false, coAgents: [], titleCo: "Title Company of the Rockies", contractDate: "2026-11-14", closingDate: "2027-01-08", opened: "2026-11-14",
+        items: { uc_form: st("submitted", { file: "Under Contract Form (generated).pdf" }), contract: st("submitted", { file: "Executed Contract.pdf" }) }, extra: [],
+        log: [["Nov 14", "Jamie opened the deal"]] },
+      { id: 4, type: "seller", agent: "jamie", address: "9 Placeholder Lane", city: "Basalt", propType: "Townhouse", yearBuilt: "2005", price: 1650000, sellers: "A. Sample", buyers: "J. and M. Example", mls: "190102", dash: "3860", linked: 5, coAgents: [], titleCo: "Land Title Guarantee", contractDate: "2026-10-15", closingDate: "2026-11-30", opened: "2026-10-15",
+        items: allApproved("tx", { closing_instr: st("missing"), closing_docs: st("missing"), funds: st("missing"), insp_obj: st("approved"), amend: st("na") }), extra: [],
+        log: [["Oct 15", "Jamie opened a dual agency deal (linked to the buyer side)"]] },
+      { id: 5, type: "buyer", agent: "jamie", address: "9 Placeholder Lane", city: "Basalt", propType: "Townhouse", yearBuilt: "2005", price: 1650000, sellers: "A. Sample", buyers: "J. and M. Example", mls: "190102", dash: "3861", linked: 4, inHouse: true, coAgents: [], titleCo: "Land Title Guarantee", contractDate: "2026-10-15", closingDate: "2026-11-30", opened: "2026-10-15",
+        items: allApproved("tx", { closing_instr: st("missing"), closing_docs: st("missing"), funds: st("missing"), amend: st("na") }), extra: [],
+        log: [["Oct 15", "Jamie opened a dual agency deal (linked to the seller side)"]] },
+      { id: 6, type: "buyer", agent: "jamie", address: "300 Mockup Mesa Drive", city: "Aspen", propType: "Single family", yearBuilt: "1995", price: 3400000, sold: 3325000, listPrice: 3450000, sellers: "Example Family LLC", buyers: "S. Placeholder", mls: "189870", dash: "3790", inHouse: false, coAgents: [], titleCo: "Title Company of the Rockies", contractDate: "2026-09-20", closingDate: "2026-11-10", opened: "2026-09-20",
+        items: allApproved("tx", { amend: st("na"), inventory: st("na") }), extra: [],
+        advice: { amount: 42000, date: "2026-11-13", file: "Title advice.pdf" },
+        log: [["Nov 10", "Closed"], ["Nov 12", "Petrina approved the last document. File complete."], ["Nov 13", "Petrina uploaded the title advice ($42,000)"]] },
+      { id: 7, type: "seller", agent: "morgan", address: "15 Template Trail", city: "Aspen", propType: "Single family", yearBuilt: "2012", price: 6200000, sold: 6050000, listPrice: 6200000, sellers: "Template Trust", buyers: "Example Buyer LLC", mls: "189655", dash: "3771", coAgents: [], titleCo: "Land Title Guarantee", contractDate: "2026-09-10", closingDate: "2026-11-06", opened: "2026-09-10",
+        items: allApproved("tx", { inventory: st("na") }), extra: [],
+        advice: { amount: 151250, date: "2026-11-09", file: "Title advice.pdf" },
+        crf: { status: "submitted", gross: 151250, adj: "", adjWhy: "", assirRefName: "", assirRef: 0, outRefName: "", outRef: 0, payTo: "Morgan Reyes", split: 0.85, submitted: "2026-11-13" },
+        log: [["Nov 9", "Petrina uploaded the title advice"], ["Nov 13", "Morgan submitted the CRF"]] },
+      { id: 8, type: "buyer", agent: "taylor", address: "88 Specimen Street", city: "Glenwood Springs", propType: "Single family", yearBuilt: "1965", price: 720000, sold: 705000, listPrice: 739000, sellers: "Outside seller", buyers: "D. Example", mls: "189544", dash: "3749", inHouse: false, coAgents: [], titleCo: "Stewart Title", contractDate: "2026-09-02", closingDate: "2026-11-04", opened: "2026-09-02",
+        items: allApproved("tx", { amend: st("na"), inventory: st("na") }), extra: [],
+        advice: { amount: 17625, date: "2026-11-06", file: "Title advice.pdf" },
+        crf: { status: "tc", gross: 17625, adj: "", adjWhy: "", assirRefName: "Example Agent (20% referral)", assirRef: 3525, outRefName: "", outRef: 0, payTo: "Taylor Brooks Realty LLC", split: 0.8, submitted: "2026-11-10", tcApproved: "2026-11-11" },
+        log: [["Nov 10", "Taylor submitted the CRF"], ["Nov 11", "Petrina approved the CRF and sent it to accounting"]] },
+      { id: 9, type: "seller", agent: "riley", address: "21 Example Ridge", city: "Snowmass Village", propType: "Condominium", yearBuilt: "1981", price: 1295000, sold: 1260000, listPrice: 1295000, sellers: "P. Sample", buyers: "Q. Example", mls: "189301", dash: "3702", coAgents: [], titleCo: "Land Title Guarantee", contractDate: "2026-08-20", closingDate: "2026-10-22", opened: "2026-08-20",
+        items: allApproved("tx", { inventory: st("na") }), extra: [],
+        advice: { amount: 31500, date: "2026-10-24", file: "Title advice.pdf" },
+        crf: { status: "paid", gross: 31500, adj: "", adjWhy: "", assirRefName: "", assirRef: 0, outRefName: "", outRef: 0, payTo: "Riley Chen", split: 0.8, submitted: "2026-10-25", tcApproved: "2026-10-26", acctApproved: "2026-10-27", paid: "2026-10-28" },
+        log: [["Oct 28", "Accounting marked the commission paid"]] },
+      { id: 10, type: "listing", agent: "morgan", address: "5 Mockingbird Example Rd", city: "Woody Creek", propType: "Ranch / acreage", yearBuilt: "1998", price: 12500000, sellers: "Sample Ranch LLC", mls: "190480", dash: "5099", coAgents: [], opened: "2026-11-02",
+        items: allApproved("listing"), tasks: { 0: true, 1: true, 2: true, 3: false }, extra: [],
+        log: [["Nov 6", "All listing documents approved. Ready for MLS."]] },
+      { id: 11, type: "buyer", agent: "quinn", address: "60 Sample Spur", city: "Glenwood Springs", propType: "Townhouse", yearBuilt: "2019", price: 640000, sellers: "Outside seller", buyers: "E. Example", mls: "190200", dash: "3866", inHouse: false, coAgents: [], titleCo: "Stewart Title", contractDate: "2026-10-30", closingDate: "2026-12-12", opened: "2026-10-30",
+        items: { uc_form: st("approved"), contract: st("approved"), agency: st("approved"), em_receipt: st("approved"), em_copy: st("approved") }, extra: [],
+        log: [["Oct 30", "Quinn opened the deal"]] }
+    ]
+  };
+}
+
+let S;
+const KEY = "assir-deal-desk-mockup-v1";
+try { S = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch (e) { S = seed(); }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+// ---------- Helpers ----------
+const $ = s => document.querySelector(s);
+const esc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const money = n => n == null || n === "" || isNaN(n) ? "—" : Number(n).toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: Number(n) % 1 ? 2 : 0, maximumFractionDigits: 2 });
+const fmtDate = s => { if (!s) return "—"; const d = new Date(s + "T12:00:00"); return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); };
+const short = s => { const d = new Date(s + "T12:00:00"); return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
+const todayShort = short(TODAY);
+const deal = id => S.deals.find(d => d.id === +id);
+const agentName = d => PEOPLE[d.agent].name;
+const actor = () => ({ agent: "Jamie", assistant: "Casey", tc: "Petrina", accounting: "Accounting", leadership: "Will" }[S.role]);
+
+function defsFor(d) {
+  const base = d.type === "listing" ? LISTING_ITEMS : TX_ITEMS;
+  return base.concat(d.extra || []);
+}
+function itemsOf(d) {
+  return defsFor(d).map(def => {
+    if (def.cond && !def.cond(d)) return { def: def, s: { status: "auto-na" } };
+    return { def: def, s: d.items[def.key] || { status: "missing" } };
+  });
+}
+function progress(d) {
+  const list = itemsOf(d).filter(x => x.s.status !== "auto-na");
+  const done = list.filter(x => x.s.status === "approved" || x.s.status === "na").length;
+  return { done: done, total: list.length, complete: done === list.length };
+}
+function counts(d) {
+  const c = { missing: 0, rejected: 0, submitted: 0, nareq: 0 };
+  itemsOf(d).forEach(x => {
+    if (x.s.status === "missing") c.missing++;
+    if (x.s.status === "rejected") c.rejected++;
+    if (x.s.status === "submitted") c.submitted++;
+    if (x.s.status === "na-req") c.nareq++;
+  });
+  return c;
+}
+function stage(d) {
+  const p = progress(d);
+  if (d.type === "listing") {
+    if (!d.dash) return ["New: TC entering in dash", "info"];
+    if (!p.complete) return [d.extra.length ? "Listing change in progress" : "Gathering documents", "warn"];
+    const allTasks = OFFICE_TASKS.every((_, i) => d.tasks && d.tasks[i]);
+    return allTasks ? ["Active on MLS", "ok"] : ["Ready for MLS", "ok"];
+  }
+  if (!d.dash) return ["New: TC entering in dash", "info"];
+  if (!p.complete) return ["Under contract", "warn"];
+  if (!d.advice) return ["File complete: waiting on title advice", "info"];
+  const c = d.crf;
+  if (!c || c.status === "draft") return ["CRF needed from agent", "bad"];
+  if (c.status === "returned") return ["CRF returned to agent", "bad"];
+  if (c.status === "submitted") return ["CRF with TC", "info"];
+  if (c.status === "tc") return ["CRF with accounting", "info"];
+  if (c.status === "acct") return ["Approved: wire pending", "ok"];
+  return ["Paid", "ok"];
+}
+const pill = (text, tone) => `<span class="pill t-${tone}">${esc(text)}</span>`;
+const ST_PILL = {
+  missing: ["Missing", "muted"], submitted: ["Waiting on TC", "info"], approved: ["Approved", "ok"], rejected: ["Needs fixing", "bad"],
+  "na-req": ["N/A requested", "warn"], na: ["Not applicable", "muted"], "auto-na": ["Not required", "muted"]
+};
+function folder(d) {
+  const side = d.type === "listing" ? "Listing" : d.type === "seller" ? "Seller Side" : "Buyer Side";
+  return `ASSIR Transactions / ${d.opened.slice(0, 4)} / ${d.address}, ${d.city} / ${side}`;
+}
+function crfCalc(c) {
+  const gross = +c.gross || 0;
+  const lessRef = gross - (+c.assirRef || 0) - (+c.outRef || 0);
+  const admin = Math.round(lessRef * 0.05 * 100) / 100;
+  const afterAdmin = lessRef - admin;
+  const net = Math.round(afterAdmin * (+c.split || 0) * 100) / 100;
+  return { gross: gross, lessRef: lessRef, admin: admin, afterAdmin: afterAdmin, net: net, assir: Math.round((afterAdmin - net) * 100) / 100 };
+}
+function addLog(d, text) { d.log = d.log || []; d.log.push([todayShort, text]); }
+function toast(msg) {
+  document.querySelectorAll(".toast").forEach(x => x.remove());
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+function view() { return S.views[S.role] || { name: "home" }; }
+function go(v) { S.views[S.role] = v; save(); render(); window.scrollTo(0, 0); }
+
+// Which deals does each role see?
+function visibleDeals() {
+  if (S.role === "agent") return S.deals.filter(d => d.agent === "jamie");
+  if (S.role === "assistant") return S.deals.filter(d => (S.team[d.agent] || []).includes("Casey Lin"));
+  if (S.role === "tc") return S.deals.filter(d => PEOPLE[d.agent].tc === "petrina");
+  if (S.role === "accounting") return S.deals.filter(d => d.type !== "listing" && progress(d).complete);
+  return S.deals;
+}
+
+// ---------- Render ----------
+function render() {
+  $("#roles").innerHTML = ROLES.map(r => `<button data-act="role" data-role="${r.id}" aria-pressed="${S.role === r.id}">${esc(r.label)}</button>`).join("");
+  $("#whoami").textContent = "Signed in as " + ROLES.find(r => r.id === S.role).who;
+  const v = view();
+  let html;
+  if (v.name === "deal" && deal(v.id) && visibleDeals().includes(deal(v.id))) html = renderDeal(deal(v.id));
+  else if (S.role === "agent" || S.role === "assistant") html = renderAgentHome();
+  else if (S.role === "tc") html = renderTcHome();
+  else if (S.role === "accounting") html = renderAcctHome();
+  else html = renderLeaderHome();
+  $("#app").innerHTML = html;
+}
+
+function dealRows(list, opts) {
+  opts = opts || {};
+  if (!list.length) return `<div class="empty">${esc(opts.empty || "No deals here.")}</div>`;
+  return `<div class="deals">` + list.map(d => {
+    const p = progress(d), [s, tone] = stage(d), c = counts(d);
+    const flags = [];
+    if (c.rejected) flags.push(`<span class="small" style="color:var(--bad)">${c.rejected} to fix</span>`);
+    if (c.missing) flags.push(`<span class="small muted">${c.missing} missing</span>`);
+    if (c.submitted && opts.tc) flags.push(`<span class="small" style="color:var(--info)">${c.submitted} to review</span>`);
+    return `<button class="deal-row" data-act="open" data-id="${d.id}">
+      <div style="min-width:0"><div class="row" style="gap:8px"><span class="addr">${esc(d.address)}</span>${d.linked ? '<span class="tag dual">Dual agency</span>' : ""}</div>
+        <div class="small muted">${esc(d.city)} · ${TYPE_LABEL[d.type]}${opts.showAgent ? " · " + esc(agentName(d)) : ""}</div></div>
+      <div>${pill(s, tone)}</div>
+      <div><div class="bar ${p.complete ? "done" : ""}"><span style="width:${p.total ? Math.round(p.done / p.total * 100) : 0}%"></span></div>
+        <div class="small muted num" style="margin-top:4px">${p.done} of ${p.total} approved</div></div>
+      <div class="row" style="gap:10px;justify-content:flex-end">${flags.join("")}</div>
+    </button>`;
+  }).join("") + `</div>`;
+}
+
+function renderAgentHome() {
+  const list = visibleDeals();
+  const isAsst = S.role === "assistant";
+  let toFix = 0, missing = 0, crfNeeded = 0, waiting = 0;
+  list.forEach(d => { const c = counts(d); toFix += c.rejected; missing += c.missing; waiting += c.submitted; if (stage(d)[0].startsWith("CRF needed") || stage(d)[0].startsWith("CRF returned")) crfNeeded++; });
+  const active = list.filter(d => stage(d)[0] !== "Paid");
+  const done = list.filter(d => stage(d)[0] === "Paid");
+  return `<div class="stack">
+    <div class="row between">
+      <div><h1>${isAsst ? "Deals I support" : "My deals"}</h1>
+      <p class="muted">${isAsst ? "You have standing access to every deal for Jamie Alvarez and Morgan Reyes." : "Everything you have open, and what each deal still needs."}</p></div>
+      <div class="row">
+        ${isAsst ? "" : `<button class="btn" data-act="team">My team</button>`}
+        <button class="btn" data-act="reminder">Preview reminder email</button>
+        <button class="btn primary" data-act="new">New deal</button>
+      </div>
+    </div>
+    <div class="attn">
+      <div class="cell ${toFix ? "hot" : ""}"><div class="label">Returned to fix</div><div class="big num">${toFix}</div><div class="small muted">Documents your TC sent back</div></div>
+      <div class="cell"><div class="label">Still missing</div><div class="big num">${missing}</div><div class="small muted">Across ${active.length} open deals</div></div>
+      <div class="cell"><div class="label">Waiting on TC</div><div class="big num">${waiting}</div><div class="small muted">Submitted, not yet reviewed</div></div>
+      <div class="cell ${crfNeeded ? "hot" : ""}"><div class="label">Commission forms due</div><div class="big num">${crfNeeded}</div><div class="small muted">Title funds received</div></div>
+    </div>
+    <div class="panel"><div class="panel-h"><h3>Open deals</h3><span class="small muted">Tap a deal to see its checklist</span></div>${dealRows(active, { showAgent: isAsst })}</div>
+    ${done.length ? `<div class="panel"><div class="panel-h"><h3>Paid</h3></div>${dealRows(done, { showAgent: isAsst })}</div>` : ""}
+  </div>`;
+}
+
+function renderDeal(d) {
+  const p = progress(d), [s, tone] = stage(d);
+  const role = S.role, isAgentSide = role === "agent" || role === "assistant", isTc = role === "tc";
+  const linked = d.linked ? deal(d.linked) : null;
+  const facts = [
+    ["Agent", agentName(d) + (d.coAgents.length ? " · co-agent " + d.coAgents.join(", ") : "")],
+    ["TC", TCS[PEOPLE[d.agent].tc]],
+    ["Office", PEOPLE[d.agent].office],
+    ["Type", d.propType + (d.yearBuilt ? ", built " + d.yearBuilt : "")],
+    [d.type === "listing" ? "List price" : "Contract price", money(d.price)],
+    ["dash #", d.dash || "Not entered yet"],
+    ["MLS #", d.mls || "—"]
+  ];
+  if (d.type !== "listing") facts.push(["Closing", fmtDate(d.closingDate)], ["Title company", d.titleCo || "—"]);
+
+  const items = itemsOf(d).map(({ def, s: it }) => {
+    const [lab, t] = ST_PILL[it.status];
+    let acts = "";
+    if (isAgentSide && ["missing", "rejected"].includes(it.status)) {
+      acts += def.prefill ? `<button class="btn sm primary" data-act="prefill" data-id="${d.id}" data-key="${def.key}">Review and submit</button><button class="btn sm" data-act="upload" data-id="${d.id}" data-key="${def.key}">Upload PDF</button>`
+                          : `<button class="btn sm primary" data-act="upload" data-id="${d.id}" data-key="${def.key}">${it.status === "rejected" ? "Upload corrected PDF" : "Upload PDF"}</button>`;
+      if (def.optional && it.status === "missing") acts += `<button class="btn sm" data-act="nareq" data-id="${d.id}" data-key="${def.key}">Doesn't apply</button>`;
+    }
+    if (isAgentSide && it.status === "submitted") acts += `<button class="btn sm" data-act="upload" data-id="${d.id}" data-key="${def.key}">Replace</button>`;
+    if (isTc && it.status === "submitted") acts += `<button class="btn sm ok" data-act="approve" data-id="${d.id}" data-key="${def.key}">Approve</button><button class="btn sm danger" data-act="reject" data-id="${d.id}" data-key="${def.key}">Return to agent</button>`;
+    if (isTc && it.status === "na-req") acts += `<button class="btn sm ok" data-act="approve-na" data-id="${d.id}" data-key="${def.key}">Agree, not needed</button><button class="btn sm danger" data-act="reject" data-id="${d.id}" data-key="${def.key}">It's needed</button>`;
+    const fileLine = it.file && !["missing", "auto-na", "na", "na-req"].includes(it.status)
+      ? `<div class="file">📄 ${esc(it.file)}${it.date ? " · " + fmtDate(it.date) : ""}${it.sharedFrom ? " · also filed to the linked deal" : ""}</div>` : "";
+    const note = it.status === "rejected" && it.note ? `<div class="note"><b>Petrina:</b> ${esc(it.note)}</div>`
+      : it.status === "na-req" && it.note ? `<div class="note info">${esc(it.note)}</div>` : "";
+    const hint = it.status === "auto-na" ? def.na : def.hint || "";
+    return `<div class="item ${["auto-na", "na"].includes(it.status) ? "na" : ""}">
+      <div style="min-width:0"><div class="row" style="gap:8px"><span class="name">${esc(def.name)}</span>${pill(lab, t)}${def.optional && it.status !== "auto-na" ? '<span class="tag">If applicable</span>' : ""}${linked && def.shared ? '<span class="tag dual">Files to both sides</span>' : ""}</div>
+        ${hint ? `<div class="hint">${esc(hint)}</div>` : ""}${fileLine}${note}</div>
+      <div class="acts">${acts}</div></div>`;
+  }).join("");
+
+  // Side panels
+  let side = "";
+  if (d.type === "listing") {
+    side += `<div class="panel"><div class="panel-h"><h3>Office tasks</h3><span class="small muted">From the listing checklist</span></div><div class="panel-b">
+      ${p.complete ? "" : `<p class="small muted" style="margin-bottom:10px">These start once every listing document is approved.</p>`}
+      <div class="checks">${OFFICE_TASKS.map((t, i) => `<label><input type="checkbox" data-act="task" data-id="${d.id}" data-i="${i}" ${d.tasks && d.tasks[i] ? "checked" : ""} ${isTc && p.complete ? "" : "disabled"}> ${esc(t)}</label>`).join("")}</div>
+      ${isAgentSide && p.complete ? `<div style="margin-top:14px"><button class="btn sm" data-act="amend" data-id="${d.id}">Amend or extend this listing</button></div>` : ""}
+    </div></div>`;
+  } else {
+    const c = d.crf;
+    const steps = [
+      ["All documents approved", p.complete],
+      ["Title advice received", !!d.advice],
+      ["CRF submitted by agent", c && ["submitted", "tc", "acct", "paid"].includes(c.status)],
+      ["CRF approved by TC", c && ["tc", "acct", "paid"].includes(c.status)],
+      ["CRF approved by accounting", c && ["acct", "paid"].includes(c.status)],
+      ["Commission paid", c && c.status === "paid"]
+    ];
+    const nowIdx = steps.findIndex(x => !x[1]);
+    let action = "";
+    if (isAgentSide && d.advice && (!c || c.status === "draft" || c.status === "returned")) action = `<button class="btn primary" data-act="crf" data-id="${d.id}">Fill out commission request</button>`;
+    else if (isAgentSide && !p.complete) action = `<p class="small muted">The commission request opens once the file is complete and the title advice is in. No complete file, no commission.</p>`;
+    if (isTc && p.complete && !d.advice) action = `<button class="btn primary" data-act="advice" data-id="${d.id}">Upload title advice</button>`;
+    if (isTc && c && c.status === "submitted") action = `<button class="btn primary" data-act="crf-review" data-id="${d.id}">Review CRF</button>`;
+    if (role === "accounting" && c && c.status === "tc") action = `<button class="btn primary" data-act="crf-review" data-id="${d.id}">Review CRF</button>`;
+    if (role === "accounting" && c && c.status === "acct") action = `<button class="btn ok" data-act="paid" data-id="${d.id}">Mark commission paid</button>`;
+    if (c && c.status !== "draft" && !action.includes("crf-review")) action += `<div style="margin-top:8px"><button class="linkbtn small" data-act="crf-view" data-id="${d.id}">View CRF</button></div>`;
+    if (c && c.status === "returned" && c.returnNote) action = `<div class="note" style="margin-bottom:10px;font-size:.83rem;background:var(--bad-soft);color:var(--bad);padding:6px 10px;border-radius:4px"><b>Returned:</b> ${esc(c.returnNote)}</div>` + action;
+    side += `<div class="panel"><div class="panel-h"><h3>Getting paid</h3>${d.advice ? `<span class="small muted num">Advice: ${money(d.advice.amount)}</span>` : ""}</div><div class="panel-b">
+      <ol class="steps">${steps.map((x, i) => `<li class="${x[1] ? "done" : i === nowIdx ? "now" : ""}"><span class="dot"></span><span>${esc(x[0])}</span></li>`).join("")}</ol>
+      ${action ? `<div style="margin-top:12px">${action}</div>` : ""}
+    </div></div>`;
+  }
+  side += `<div class="panel"><div class="panel-h"><h3>Activity</h3></div><div class="panel-b"><ul class="log">${(d.log || []).slice().reverse().map(l => `<li><span class="muted num">${esc(l[0])}</span><span>${esc(l[1])}</span></li>`).join("")}</ul></div></div>`;
+
+  const tcEntry = isTc && !d.dash ? `<div class="panel"><div class="panel-b row between"><div><b>New deal: enter it in dash</b><div class="small muted">Everything you need is on this page. Type the dash transaction number when you're done.</div></div>
+    <div class="row"><input id="dash-${d.id}" placeholder="dash #" class="num" style="border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:110px;background:var(--surface)"><button class="btn primary" data-act="dash" data-id="${d.id}">Save</button></div></div></div>` : "";
+
+  return `<div class="stack">
+    <div class="back"><button class="linkbtn" data-act="home">← Back</button></div>
+    <div class="row between" style="align-items:flex-start">
+      <div style="min-width:0"><div class="row" style="gap:8px"><span class="tag">${TYPE_LABEL[d.type]}</span>${linked ? `<button class="tag dual" style="border:0;cursor:pointer" data-act="open" data-id="${linked.id}">Dual agency · open ${TYPE_LABEL[linked.type].toLowerCase()} →</button>` : ""}</div>
+        <h1 style="margin-top:6px">${esc(d.address)}</h1><p class="muted">${esc(d.city)}, Colorado · ${d.type === "listing" ? "Sellers: " + esc(d.sellers) : "Sellers: " + esc(d.sellers) + " · Buyers: " + esc(d.buyers)}</p></div>
+      <div style="text-align:right">${pill(s, tone)}<div class="small muted num" style="margin-top:6px">${p.done} of ${p.total} approved</div></div>
+    </div>
+    ${tcEntry}
+    <div class="panel"><div class="panel-b stack" style="gap:14px">
+      <div class="facts">${facts.map(f => `<div><div class="label">${esc(f[0])}</div><div class="v">${esc(f[1])}</div></div>`).join("")}</div>
+      <div><div class="label" style="margin-bottom:4px">Dropbox folder</div><div class="path">${esc(folder(d))}</div></div>
+    </div></div>
+    <div class="two">
+      <div class="panel"><div class="panel-h"><h3>${d.type === "listing" ? "Listing documents" : "Transaction documents"}</h3><span class="small muted">${d.type === "listing" ? "Complete before the listing goes on the MLS" : "Complete before commission is paid"}</span></div><div class="items">${items}</div></div>
+      <div class="stack">${side}</div>
+    </div>
+  </div>`;
+}
+
+function renderTcHome() {
+  const list = visibleDeals();
+  const tab = view().tab || "review";
+  const reviewItems = [];
+  list.forEach(d => itemsOf(d).forEach(x => { if (x.s.status === "submitted" || x.s.status === "na-req") reviewItems.push({ d: d, def: x.def, s: x.s }); }));
+  const newDeals = list.filter(d => !d.dash);
+  const adviceNeeded = list.filter(d => d.type !== "listing" && progress(d).complete && !d.advice);
+  const crfs = list.filter(d => d.crf && d.crf.status === "submitted");
+  const tasks = list.filter(d => d.type === "listing" && progress(d).complete && !OFFICE_TASKS.every((_, i) => d.tasks && d.tasks[i]));
+  const tabs = [["review", "Documents to review", reviewItems.length], ["new", "Enter in dash", newDeals.length], ["advice", "Title advice", adviceNeeded.length], ["crf", "CRFs to approve", crfs.length], ["tasks", "Listing tasks", tasks.length], ["all", "All deals", list.length]];
+  let body = "";
+  if (tab === "review") {
+    body = reviewItems.length ? `<div class="tablewrap"><table><thead><tr><th>Document</th><th>Deal</th><th>Agent</th><th>Submitted</th><th></th></tr></thead><tbody>` + reviewItems.map(r => `<tr>
+      <td><b>${esc(r.def.name)}</b><div class="small muted">${r.s.status === "na-req" ? esc(r.s.note || "Agent says this doesn't apply") : "📄 " + esc(r.s.file || "")}</div></td>
+      <td><button class="linkbtn" data-act="open" data-id="${r.d.id}">${esc(r.d.address)}</button><div class="small muted">${TYPE_LABEL[r.d.type]}</div></td>
+      <td>${esc(agentName(r.d))}</td><td class="num">${fmtDate(r.s.date)}</td>
+      <td><div class="row" style="gap:6px;justify-content:flex-end;flex-wrap:nowrap">${r.s.status === "na-req"
+        ? `<button class="btn sm ok" data-act="approve-na" data-id="${r.d.id}" data-key="${r.def.key}">Agree</button><button class="btn sm danger" data-act="reject" data-id="${r.d.id}" data-key="${r.def.key}">It's needed</button>`
+        : `<button class="btn sm ok" data-act="approve" data-id="${r.d.id}" data-key="${r.def.key}">Approve</button><button class="btn sm danger" data-act="reject" data-id="${r.d.id}" data-key="${r.def.key}">Return</button>`}</div></td></tr>`).join("") + `</tbody></table></div>`
+      : `<div class="empty">Nothing waiting for review. New uploads from your agents show up here.</div>`;
+  } else if (tab === "new") body = dealRows(newDeals, { showAgent: true, tc: true, empty: "No new deals to enter in dash." });
+  else if (tab === "advice") body = adviceNeeded.length ? `<div class="empty" style="padding-bottom:0">These files are complete. When the title advice arrives, upload it to the deal and the agent is told to submit their CRF.</div>` + dealRows(adviceNeeded, { showAgent: true }) : `<div class="empty">No complete files waiting on a title advice.</div>`;
+  else if (tab === "crf") body = dealRows(crfs, { showAgent: true, empty: "No commission requests waiting on you." });
+  else if (tab === "tasks") body = dealRows(tasks, { showAgent: true, empty: "No listing tasks outstanding." });
+  else body = dealRows(list, { showAgent: true, tc: true });
+
+  return `<div class="stack">
+    <div><h1>Good morning, Petrina</h1><p class="muted">You cover Jamie Alvarez, Morgan Reyes and Taylor Brooks in this example.</p></div>
+    <div class="attn">
+      <div class="cell ${reviewItems.length ? "hot" : ""}"><div class="label">To review</div><div class="big num">${reviewItems.length}</div><div class="small muted">Uploads and N/A requests</div></div>
+      <div class="cell"><div class="label">Enter in dash</div><div class="big num">${newDeals.length}</div><div class="small muted">New deals</div></div>
+      <div class="cell"><div class="label">Title advice</div><div class="big num">${adviceNeeded.length}</div><div class="small muted">Complete files waiting on funds</div></div>
+      <div class="cell"><div class="label">CRFs</div><div class="big num">${crfs.length}</div><div class="small muted">Waiting on your approval</div></div>
+    </div>
+    <div class="panel">
+      <div class="tabs gutter" role="tablist" style="padding-left:12px;padding-right:12px">${tabs.map(t => `<button role="tab" aria-selected="${tab === t[0]}" data-act="tab" data-tab="${t[0]}">${t[1]}<span class="count ${t[2] && ["review", "new", "crf"].includes(t[0]) ? "hot" : ""}">${t[2]}</span></button>`).join("")}</div>
+      ${body}
+    </div>
+  </div>`;
+}
+
+function renderAcctHome() {
+  const list = visibleDeals();
+  const toApprove = list.filter(d => d.crf && d.crf.status === "tc");
+  const toPay = list.filter(d => d.crf && d.crf.status === "acct");
+  const paid = list.filter(d => d.crf && d.crf.status === "paid");
+  const rows = (arr, act, label, empty) => arr.length ? `<div class="tablewrap"><table><thead><tr><th>Deal</th><th>Agent</th><th>Advice</th><th>Net to agent</th><th>ASSIR</th><th></th></tr></thead><tbody>` + arr.map(d => { const k = crfCalc(d.crf); return `<tr>
+      <td><button class="linkbtn" data-act="open" data-id="${d.id}">${esc(d.address)}</button><div class="small muted">${esc(d.city)} · ${TYPE_LABEL[d.type]}</div></td>
+      <td>${esc(agentName(d))}<div class="small muted">Pay to: ${esc(d.crf.payTo)}</div></td>
+      <td class="num">${money(d.advice.amount)}</td><td class="num"><b>${money(k.net)}</b></td><td class="num">${money(k.assir)}</td>
+      <td style="text-align:right">${act ? `<button class="btn sm ${act === "paid" ? "ok" : "primary"}" data-act="${act}" data-id="${d.id}">${label}</button>` : `<span class="small muted">${fmtDate(d.crf.paid)}</span>`}</td></tr>`; }).join("") + `</tbody></table></div>` : `<div class="empty">${empty}</div>`;
+  return `<div class="stack">
+    <div><h1>Commission requests</h1><p class="muted">You only see files that are complete. Each CRF here has already been approved by the deal's TC.</p></div>
+    <div class="panel"><div class="panel-h"><h3>Waiting on your approval</h3><span class="count ${toApprove.length ? "hot" : ""}">${toApprove.length}</span></div>${rows(toApprove, "crf-review", "Review", "No CRFs waiting on you.")}</div>
+    <div class="panel"><div class="panel-h"><h3>Approved, wire not sent</h3><span class="count">${toPay.length}</span></div>${rows(toPay, "paid", "Mark paid", "Nothing waiting on a wire.")}</div>
+    <div class="panel"><div class="panel-h"><h3>Paid</h3></div>${rows(paid, null, "", "Nothing paid yet.")}</div>
+  </div>`;
+}
+
+function renderLeaderHome() {
+  const office = view().office || "All offices";
+  const offices = ["All offices", "Aspen", "Snowmass", "Basalt", "Carbondale", "Glenwood Springs"];
+  const list = S.deals.filter(d => office === "All offices" || PEOPLE[d.agent].office === office);
+  const n = f => list.filter(f).length;
+  const sg = d => stage(d)[0];
+  let review = 0, fix = 0; list.forEach(d => { const c = counts(d); review += c.submitted + c.nareq; fix += c.rejected; });
+  return `<div class="stack">
+    <div class="row between"><div><h1>Company view</h1><p class="muted">Every deal at every office. View only: approvals stay with the TCs and accounting.</p></div>
+      <div class="field" style="width:200px"><label for="office-filter">Office</label><select id="office-filter" data-act="office">${offices.map(o => `<option ${o === office ? "selected" : ""}>${o}</option>`).join("")}</select></div></div>
+    <div class="attn">
+      <div class="cell"><div class="label">Listings in progress</div><div class="big num">${n(d => d.type === "listing" && !sg(d).startsWith("Active"))}</div><div class="small muted">Not yet ready for MLS</div></div>
+      <div class="cell"><div class="label">Under contract</div><div class="big num">${n(d => d.type !== "listing" && ["Under contract", "New: TC entering in dash"].includes(sg(d)))}</div><div class="small muted">Files still open</div></div>
+      <div class="cell"><div class="label">Waiting on payment</div><div class="big num">${n(d => d.type !== "listing" && progress(d).complete && sg(d) !== "Paid")}</div><div class="small muted">Complete files, commission not paid</div></div>
+      <div class="cell ${fix ? "hot" : ""}"><div class="label">Returned to agents</div><div class="big num">${fix}</div><div class="small muted">${review} more waiting on TC review</div></div>
+    </div>
+    <div class="panel"><div class="tablewrap"><table><thead><tr><th>Deal</th><th>Agent</th><th>Office</th><th>TC</th><th>Status</th><th>Progress</th></tr></thead><tbody>
+      ${list.map(d => { const p = progress(d), [s, t] = stage(d); return `<tr class="click" data-act="open" data-id="${d.id}"><td><b>${esc(d.address)}</b><div class="small muted">${esc(d.city)} · ${TYPE_LABEL[d.type]}</div></td><td>${esc(agentName(d))}</td><td>${esc(PEOPLE[d.agent].office)}</td><td>${esc(TCS[PEOPLE[d.agent].tc])}</td><td>${pill(s, t)}</td><td class="num">${p.done}/${p.total}</td></tr>`; }).join("")}
+    </tbody></table></div></div>
+  </div>`;
+}
+
+// ---------- Modals ----------
+function modal(title, sub, body, foot, wide) {
+  $("#modal-root").innerHTML = `<div class="scrim" data-act="scrim"><div class="modal ${wide ? "wide" : ""}" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <div class="modal-h"><div><h2 id="m-title">${esc(title)}</h2>${sub ? `<p class="small muted">${sub}</p>` : ""}</div><button class="x" data-act="close" aria-label="Close">×</button></div>
+    <div class="modal-b">${body}</div>${foot ? `<div class="modal-f">${foot}</div>` : ""}</div></div>`;
+  const f = $("#modal-root input:not([type=radio]):not([type=hidden]), #modal-root textarea, #modal-root select"); if (f) f.focus();
+}
+function closeModal() { $("#modal-root").innerHTML = ""; }
+const fld = (id, label, val, opts) => {
+  opts = opts || {};
+  const pre = opts.pre ? `<span class="pre">Filled in from this deal</span>` : "";
+  if (opts.select) return `<div class="field ${opts.full ? "full" : ""}"><label for="${id}">${label}</label><select id="${id}">${opts.select.map(o => `<option ${o === val ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>${pre}</div>`;
+  if (opts.area) return `<div class="field full"><label for="${id}">${label}</label><textarea id="${id}" placeholder="${esc(opts.ph || "")}">${esc(val)}</textarea>${pre}</div>`;
+  return `<div class="field ${opts.full ? "full" : ""}"><label for="${id}">${label}</label><input id="${id}" type="${opts.type || "text"}" value="${esc(val)}" placeholder="${esc(opts.ph || "")}" ${opts.ro ? "readonly" : ""} ${opts.step ? `step="${opts.step}"` : ""}>${pre}</div>`;
+};
+const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
+
+function newDealModal() {
+  const types = [
+    ["listing", "New listing", "Seller hired us to list"],
+    ["seller", "Under contract: seller side", "Our listing went under contract"],
+    ["buyer", "Under contract: buyer side", "My buyer is under contract"],
+    ["dual", "Dual agency", "I represent buyer and seller"],
+    ["rental", "Rental", "Coming soon"]
+  ];
+  const body = `<div class="types" role="radiogroup" aria-label="Deal type">${types.map((t, i) => `<label class="${t[0] === "rental" ? "off" : ""}"><input type="radio" name="dtype" value="${t[0]}" ${i === 0 ? "checked" : ""} ${t[0] === "rental" ? "disabled" : ""}><b>${t[1]}</b><span>${t[2]}</span></label>`).join("")}</div>
+    <div class="fgrid">
+      ${fld("nd-address", "Property address", "", { full: true, ph: "Street address and unit" })}
+      ${fld("nd-city", "Town", "Aspen", { select: CITIES })}
+      ${fld("nd-type", "Property type", "Single family", { select: PROP_TYPES })}
+      ${fld("nd-year", "Year built", "", { ph: "e.g. 1998", type: "number" })}
+      ${fld("nd-price", "Price", "", { ph: "List or contract price", type: "number" })}
+      ${fld("nd-sellers", "Seller(s) legal name", "", { full: true })}
+      <div class="field full tx-only">${""}<label for="nd-buyers">Buyer(s) legal name</label><input id="nd-buyers"></div>
+      <div class="field tx-only"><label for="nd-close">Closing date</label><input id="nd-close" type="date"></div>
+      <div class="field tx-only"><label for="nd-title">Title company</label><select id="nd-title">${TITLE_COS.map(t => `<option>${t}</option>`).join("")}</select></div>
+      <div class="field tx-only"><label for="nd-mls">MLS #</label><input id="nd-mls" class="num"></div>
+      <div class="field tx-only"><label for="nd-inhouse">Is it an ASSIR listing?</label><select id="nd-inhouse"><option value="no">No, another brokerage's listing</option><option value="yes">Yes, our listing</option></select></div>
+      ${fld("nd-co", "Co-agent on this deal (optional)", "", { ph: "Name of another ASSIR agent", full: true })}
+    </div>
+    <div class="callout"><b>You type this once.</b> It fills in <span id="nd-fills"></span> so you never re-enter the same address, price or names. Your TC is notified when you save.</div>
+    <p class="err" id="nd-err" hidden></p>`;
+  modal("New deal", "Pick the kind of deal, then the basics.", body, `<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="create">Create deal</button>`, true);
+  syncNewDeal();
+}
+function syncNewDeal() {
+  const t = (document.querySelector("input[name=dtype]:checked") || {}).value;
+  document.querySelectorAll(".tx-only").forEach(el => { el.hidden = t === "listing"; });
+  const ih = document.getElementById("nd-inhouse"); if (ih) ih.closest(".field").hidden = t !== "buyer";
+  const fills = t === "listing" ? ["Residential Listing Form (dash)", "MLS Input Form", "Information Form", "Listing Checklist"]
+    : ["Under Contract Form", "Commission Request Form", "Listing Checklist closing section"];
+  const el = document.getElementById("nd-fills"); if (el) el.innerHTML = fills.map(f => `<b>${esc(f)}</b>`).join(", ");
+}
+function createDeal() {
+  const t = (document.querySelector("input[name=dtype]:checked") || {}).value;
+  const address = val("nd-address");
+  if (!address) { const e = $("#nd-err"); e.hidden = false; e.textContent = "Add the property address to create the deal."; return; }
+  const base = { agent: S.role === "assistant" ? "jamie" : "jamie", address: address, city: val("nd-city"), propType: val("nd-type"), yearBuilt: val("nd-year"), price: +val("nd-price") || null, sellers: val("nd-sellers") || "—", buyers: val("nd-buyers") || "—", mls: val("nd-mls"), dash: "", coAgents: val("nd-co") ? [val("nd-co")] : [], titleCo: val("nd-title"), closingDate: val("nd-close"), contractDate: TODAY, opened: TODAY, items: {}, extra: [], tasks: {} };
+  const who = actor();
+  let created;
+  if (t === "dual") {
+    const a = Object.assign({}, base, { id: S.nextId++, type: "seller", log: [] }), b = Object.assign({}, base, { id: S.nextId++, type: "buyer", inHouse: true, items: {}, extra: [], log: [] });
+    a.linked = b.id; b.linked = a.id; a.items = {};
+    addLog(a, `${who} opened a dual agency deal (linked to the buyer side)`); addLog(b, `${who} opened a dual agency deal (linked to the seller side)`);
+    S.deals.unshift(a, b); created = a;
+  } else {
+    created = Object.assign({}, base, { id: S.nextId++, type: t, inHouse: val("nd-inhouse") === "yes", log: [] });
+    addLog(created, `${who} opened the deal`);
+    S.deals.unshift(created);
+  }
+  closeModal(); save();
+  toast(t === "dual" ? "Two linked deals created. Petrina has been notified." : "Deal created. Petrina has been notified.");
+  go({ name: "deal", id: created.id });
+}
+
+function prefillModal(d, key) {
+  const def = defsFor(d).find(x => x.key === key);
+  const rows = [["Property address", d.address], ["Town", d.city + ", CO"], ["Property type", d.propType], ["Year built", d.yearBuilt || "—"], [d.type === "listing" ? "List price" : "Contract price", money(d.price)], ["Seller(s)", d.sellers], ["Listing broker", agentName(d)]];
+  if (d.type !== "listing") rows.push(["Buyer(s)", d.buyers], ["Closing date", fmtDate(d.closingDate)], ["Title company", d.titleCo]);
+  const extra = key === "info_form" ? [["Brochure front title", ""], ["Highlights (5)", ""], ["Showing instructions", ""]]
+    : key === "dash_form" ? [["Property style", ""], ["Features", ""], ["Property description", ""]]
+    : key === "mls_form" ? [["Zoning", ""], ["Parcel #", ""], ["Public remarks", ""]] : [["Contract date", fmtDate(d.contractDate)], ["Earnest money amount", ""]];
+  const body = `<div class="callout">${rows.length} fields are already filled in from this deal. Finish the rest and submit. The app builds the PDF and files it to Dropbox.</div>
+    <div class="fgrid">${rows.map((r, i) => fld("pf" + i, r[0], r[1], { pre: true, ro: true })).join("")}
+    ${extra.map((r, i) => fld("pfx" + i, r[0], r[1], { full: true, area: /title|Highlights|description|remarks|instructions|Features/i.test(r[0]), ph: "In the real app, the rest of the form's fields go here" })).join("")}</div>`;
+  modal(def.name, esc(d.address) + " · " + esc(d.city), body, `<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="prefill-submit" data-id="${d.id}" data-key="${key}">Submit to Petrina</button>`, true);
+}
+
+function rejectModal(d, key) {
+  const def = defsFor(d).find(x => x.key === key);
+  modal("Return to agent", esc(def.name) + " · " + esc(d.address),
+    `<div class="field"><label for="rj-note">What needs to change? The agent sees this note and it goes in their next reminder.</label><textarea id="rj-note" placeholder="e.g. Seller signature missing on page 3"></textarea></div><p class="err" id="rj-err" hidden>Add a note so ${esc(agentName(d).split(" ")[0])} knows what to fix.</p>`,
+    `<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="reject-send" data-id="${d.id}" data-key="${key}">Return to agent</button>`);
+}
+
+function crfFields(d, c, ro) {
+  const pre = { pre: !ro, ro: true };
+  return `<div class="fgrid">
+    ${fld("c-mls", "MLS #", d.mls, pre)}${fld("c-dash", "dash transaction #", d.dash, pre)}
+    ${fld("c-addr", "Property address", d.address + ", " + d.city, Object.assign({ full: true }, pre))}
+    ${fld("c-sell", "Seller's legal name", d.sellers, pre)}${fld("c-buy", "Buyer's legal name", d.buyers, pre)}
+    ${fld("c-close", "Closing date", fmtDate(d.closingDate), pre)}${fld("c-title", "Title company", d.titleCo, pre)}
+    ${fld("c-lp", "Listing price", money(d.listPrice || d.price), pre)}${fld("c-sp", "Sold price", money(d.sold || d.price), pre)}
+    ${fld("c-lb", d.type === "buyer" ? "Selling broker(s)" : "Listing broker(s)", agentName(d) + (d.coAgents.length ? " / " + d.coAgents.join(", ") : ""), Object.assign({ full: true }, pre))}
+    ${fld("c-gross", "Broker gross compensation received", c.gross, { type: "number", ro: true, pre: !ro })}
+    ${fld("c-adj", "Compensation adjustment amount (if any)", c.adj, { type: "number", ro: ro })}
+    ${ro ? fld("c-adjwhy", "Explain adjustment", c.adjWhy || "—", { full: true, ro: true }) : fld("c-adjwhy", "Explain adjustment", c.adjWhy, { area: true, ph: "Only if the compensation was reduced or split" })}
+    ${fld("c-arn", "ASSIR referral: broker name", c.assirRefName, { ro: ro })}${fld("c-ar", "ASSIR referral amount", c.assirRef || "", { type: "number", ro: ro, step: "0.01" })}
+    ${fld("c-orn", "Outside referral: person's name", c.outRefName, { ro: ro })}${fld("c-or", "Outside referral amount", c.outRef || "", { type: "number", ro: ro, step: "0.01" })}
+    ${fld("c-pay", "Make agent compensation payable to", c.payTo, { full: true, ro: ro, ph: "Company or individual, exactly as the check or wire should read" })}
+    ${fld("c-split", "Agent split (from your agent profile)", Math.round(c.split * 100) + "%", { ro: true, pre: !ro })}
+  </div>
+  <div class="panel"><div class="panel-b"><div class="calc num" id="crf-calc"></div></div></div>`;
+}
+function crfCalcHtml(c) {
+  const k = crfCalc(c);
+  return `<span>Broker gross compensation</span><span>${money(k.gross)}</span>
+    <span>Less referrals</span><span>${money(-(k.gross - k.lessRef))}</span>
+    <span>Gross less referrals</span><span>${money(k.lessRef)}</span>
+    <span>Sotheby's / admin (5%)</span><span>${money(-k.admin)}</span>
+    <span>Gross less Sotheby's</span><span>${money(k.afterAdmin)}</span>
+    <span class="tot">Net to agent (${Math.round(c.split * 100)}% split)</span><span class="tot">${money(k.net)}</span>
+    <span>ASSIR compensation</span><span>${money(k.assir)}</span>`;
+}
+function readCrf(c) {
+  return Object.assign({}, c, { adj: val("c-adj"), adjWhy: val("c-adjwhy"), assirRefName: val("c-arn"), assirRef: +val("c-ar") || 0, outRefName: val("c-orn"), outRef: +val("c-or") || 0, payTo: val("c-pay") });
+}
+function crfModal(d) {
+  const c = d.crf && d.crf.status !== "paid" ? d.crf : { status: "draft", gross: d.advice.amount, adj: "", adjWhy: "", assirRefName: "", assirRef: 0, outRefName: "", outRef: 0, payTo: agentName(d), split: PEOPLE[d.agent].split };
+  modal("Commission Request Form", "Compensation Request Form – Sales · " + esc(d.address),
+    `<div class="callout">Most of this is filled in from the deal and the title advice. Add any referrals and who to pay. The math updates as you type. Submitting here counts as your approval of the CRF.</div>` + crfFields(d, c, false) +
+    `<p class="small muted">If there's a referral or a compensation reduction, upload the signed agreement to the deal too.</p><p class="err" id="crf-err" hidden></p>`,
+    `<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="crf-submit" data-id="${d.id}">Submit to Petrina</button>`, true);
+  $("#crf-calc").innerHTML = crfCalcHtml(c);
+  crfDraftBase = c;
+}
+let crfDraftBase = null;
+document.addEventListener("input", () => { const el = $("#crf-calc"), pay = $("#c-pay"); if (el && pay && !pay.readOnly && crfDraftBase) el.innerHTML = crfCalcHtml(readCrf(crfDraftBase)); });
+function crfReadModal(d, mode) {
+  const c = d.crf;
+  let foot = `<button class="btn" data-act="close">Close</button>`;
+  if (mode === "tc") foot = `<button class="btn danger" data-act="crf-return" data-id="${d.id}">Return to agent</button><button class="btn ok" data-act="crf-tc-ok" data-id="${d.id}">Approve and send to accounting</button>`;
+  if (mode === "acct") foot = `<button class="btn" data-act="close">Cancel</button><button class="btn ok" data-act="crf-acct-ok" data-id="${d.id}">Approve CRF</button>`;
+  const hist = [["Submitted by agent", c.submitted], ["Approved by TC", c.tcApproved], ["Approved by accounting", c.acctApproved], ["Paid", c.paid]].filter(x => x[1]).map(x => `${x[0]} ${fmtDate(x[1])}`).join(" · ");
+  modal("Commission Request Form", esc(d.address) + " · " + esc(agentName(d)) + (hist ? "<br>" + esc(hist) : ""),
+    crfFields(d, c, true) + (mode === "tc" ? `<div class="field"><label for="crf-note">Note to agent (only if returning)</label><textarea id="crf-note"></textarea></div><p class="err" id="crf-err" hidden></p>` : ""), foot, true);
+  $("#crf-calc").innerHTML = crfCalcHtml(c);
+}
+function adviceModal(d) {
+  modal("Upload title advice", esc(d.address) + " · " + esc(agentName(d)),
+    `<div class="fgrid">${fld("adv-amt", "Amount received", "", { type: "number", step: "0.01", ph: "From the wire advice" })}${fld("adv-date", "Date received", TODAY, { type: "date" })}
+    <div class="field full"><label for="adv-file">Advice PDF</label><input id="adv-file" type="file" accept="application/pdf,.pdf"></div></div>
+    <p class="small muted">${esc(agentName(d).split(" ")[0])} gets an email and an app notice to fill out their commission request. The advice is filed to the deal's Dropbox folder.</p><p class="err" id="adv-err" hidden>Enter the amount from the advice.</p>`,
+    `<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="advice-save" data-id="${d.id}">Save and notify agent</button>`);
+}
+function teamModal() {
+  const list = S.team.jamie || [];
+  modal("My team", "People you add here can see and work on all of your deals, including opening new ones. Co-agents are different: add them on each deal.",
+    `<div class="panel"><div class="items">${list.length ? list.map(n => `<div class="item"><div><span class="name">${esc(n)}</span><div class="hint">Assistant · all deals</div></div><div class="acts"><button class="btn sm danger" data-act="team-remove" data-name="${esc(n)}">Remove</button></div></div>`).join("") : `<div class="empty">No one yet.</div>`}</div></div>
+    <div class="row" style="align-items:flex-end"><div class="field" style="flex:1;min-width:200px"><label for="tm-email">Add an assistant by company email</label><input id="tm-email" placeholder="name@aspensnowmasssir.com"></div><button class="btn primary" data-act="team-add">Add</button></div>
+    <p class="err" id="tm-err" hidden>Use an @aspensnowmasssir.com email address.</p>`, `<button class="btn" data-act="close">Done</button>`);
+}
+function reminderModal() {
+  const list = visibleDeals().filter(d => stage(d)[0] !== "Paid");
+  const lines = [];
+  list.forEach(d => {
+    const bad = itemsOf(d).filter(x => x.s.status === "rejected"), miss = itemsOf(d).filter(x => x.s.status === "missing");
+    const crf = stage(d)[0].startsWith("CRF needed");
+    if (!bad.length && !miss.length && !crf) return;
+    lines.push(`${d.address}, ${d.city} (${TYPE_LABEL[d.type]})`);
+    bad.forEach(x => lines.push(`   • FIX: ${x.def.name}: "${x.s.note}"`));
+    miss.forEach(x => lines.push(`   • Missing: ${x.def.name}`));
+    if (crf) lines.push(`   • Title funds are in. Fill out your commission request.`);
+    lines.push("");
+  });
+  modal("Reminder email preview", "Sent every other day while something is missing. Next one: Wednesday, Nov 18.",
+    `<div class="email"><div class="eh"><span><b>To:</b> Jamie Alvarez</span><span><b>From:</b> ASSIR Deal Desk</span><span><b>Subject:</b> ${lines.length ? "Your deals: documents still needed" : "You're all caught up"}</span></div>
+    <div class="eb">Hi Jamie,\n\nHere's what your deals still need. Tap a deal in the app to upload.\n\n${esc(lines.join("\n")) || "Nothing outstanding."}\nPetrina</div></div>`, `<button class="btn" data-act="close">Close</button>`, true);
+}
+function emailModal(d) {
+  const k = crfCalc(d.crf);
+  modal("Email sent to accounting", "This is what accounting receives when a TC approves a CRF.",
+    `<div class="email"><div class="eh"><span><b>To:</b> accounting@aspensnowmasssir.com</span><span><b>Subject:</b> CRF ready: ${esc(d.address)}, ${esc(d.city)}</span><span><b>Attached:</b> CRF – ${esc(d.address)}.pdf</span></div>
+    <div class="eb">The file for ${esc(d.address)} is complete and Petrina approved the commission request.\n\nAgent: ${esc(agentName(d))}\nPay to: ${esc(d.crf.payTo)}\nNet to agent: ${money(k.net)}\nASSIR compensation: ${money(k.assir)}\n\nReview and approve it in Deal Desk.</div></div>`,
+    `<button class="btn primary" data-act="close">OK</button>`, true);
+}
+
+// ---------- Actions ----------
+let pendingUpload = null;
+function setItem(d, key, data, fromLinked) {
+  d.items[key] = Object.assign({}, d.items[key], data);
+  const def = defsFor(d).find(x => x.key === key);
+  if (!fromLinked && d.linked && def && def.shared) {
+    const o = deal(d.linked);
+    if (o && !(o.items[key] && o.items[key].status === "approved")) { o.items[key] = Object.assign({}, data, { sharedFrom: d.id }); addLog(o, `${data.status === "submitted" ? "Uploaded" : "Updated"} ${def.name} (shared from the ${TYPE_LABEL[d.type].toLowerCase()} deal)`); }
+    d.items[key].sharedFrom = o ? o.id : null;
+  }
+}
+
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-act]");
+  if (!t) return;
+  const act = t.dataset.act, d = t.dataset.id ? deal(t.dataset.id) : null, key = t.dataset.key;
+  if (act === "scrim" && e.target !== t) return;
+  switch (act) {
+    case "role": S.role = t.dataset.role; save(); render(); break;
+    case "reset": S = seed(); save(); render(); toast("Example data reset."); break;
+    case "home": go({ name: "home", tab: view().tab, office: view().office }); break;
+    case "open": go({ name: "deal", id: +t.dataset.id, tab: view().tab, office: view().office }); break;
+    case "tab": go({ name: "home", tab: t.dataset.tab }); break;
+    case "close": case "scrim": closeModal(); break;
+    case "new": newDealModal(); break;
+    case "create": createDeal(); break;
+    case "team": teamModal(); break;
+    case "team-add": { const v = val("tm-email").toLowerCase(); if (!/^[^@\s]+@aspensnowmasssir\.com$/.test(v)) { $("#tm-err").hidden = false; return; }
+      const nm = v.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, c => c.toUpperCase()); S.team.jamie = (S.team.jamie || []).concat(nm); save(); teamModal(); toast(nm + " now has access to all your deals."); break; }
+    case "team-remove": S.team.jamie = (S.team.jamie || []).filter(n => n !== t.dataset.name); save(); teamModal(); render(); break;
+    case "reminder": reminderModal(); break;
+    case "upload": pendingUpload = { id: d.id, key: key }; $("#file-picker").value = ""; $("#file-picker").click(); break;
+    case "prefill": prefillModal(d, key); break;
+    case "prefill-submit": { const def = defsFor(d).find(x => x.key === key); setItem(d, key, { status: "submitted", file: def.name + " (generated).pdf", date: TODAY, note: "" }); addLog(d, `${actor()} submitted the ${def.name}`); closeModal(); save(); render(); toast("Submitted. The PDF was filed to Dropbox and Petrina was notified."); break; }
+    case "nareq": { const def = defsFor(d).find(x => x.key === key); setItem(d, key, { status: "na-req", note: `${actor()}: this doesn't apply to this deal.`, date: TODAY }); addLog(d, `${actor()} said ${def.name} doesn't apply`); save(); render(); toast("Sent to Petrina to confirm."); break; }
+    case "approve": { const def = defsFor(d).find(x => x.key === key); setItem(d, key, { status: "approved", note: "" }); addLog(d, `Petrina approved the ${def.name}`); save(); render();
+      toast(progress(d).complete ? (d.type === "listing" ? "Approved. Every listing document is in: ready for MLS." : "Approved. The file is complete.") : "Approved."); break; }
+    case "approve-na": { const def = defsFor(d).find(x => x.key === key); setItem(d, key, { status: "na", note: "" }); addLog(d, `Petrina agreed ${def.name} isn't needed`); save(); render(); toast("Marked not applicable."); break; }
+    case "reject": rejectModal(d, key); break;
+    case "reject-send": { const note = val("rj-note"); if (!note) { $("#rj-err").hidden = false; return; } const def = defsFor(d).find(x => x.key === key);
+      setItem(d, key, { status: d.items[key] && d.items[key].status === "na-req" ? "missing" : "rejected", note: note }); if (d.items[key].status === "missing") d.items[key].note = "";
+      addLog(d, `Petrina returned the ${def.name}: ${note}`); closeModal(); save(); render(); toast(agentName(d).split(" ")[0] + " was emailed with your note."); break; }
+    case "dash": { const v = val("dash-" + d.id); if (!v) { toast("Type the dash transaction number first."); return; } d.dash = v; addLog(d, `Petrina entered it in dash (#${v})`); save(); render(); toast("Saved. The deal is out of your dash queue."); break; }
+    case "amend": d.extra.push({ key: "amend" + (d.extra.length + 1), name: "Listing Amendment/Extension" + (d.extra.length ? " #" + (d.extra.length + 1) : ""), hint: "Signed amendment or extension. The office tasks will be redone for the change." });
+      OFFICE_TASKS.forEach((_, i) => { if (i !== 7) d.tasks[i] = false; }); addLog(d, `${actor()} started a listing change`); save(); render(); toast("Change started. Upload the signed amendment or extension."); break;
+    case "advice": adviceModal(d); break;
+    case "advice-save": { const amt = +val("adv-amt"); if (!amt) { $("#adv-err").hidden = false; return; } const f = $("#adv-file").files[0];
+      d.advice = { amount: amt, date: val("adv-date") || TODAY, file: f ? f.name : "Title advice.pdf" }; addLog(d, `Petrina uploaded the title advice (${money(amt)})`); closeModal(); save(); render(); toast(agentName(d).split(" ")[0] + " was told to submit their commission request."); break; }
+    case "crf": crfModal(d); break;
+    case "crf-submit": { const base = d.crf && d.crf.status !== "paid" ? d.crf : { gross: d.advice.amount, split: PEOPLE[d.agent].split }; const c = readCrf(base);
+      if (!c.payTo) { const e2 = $("#crf-err"); e2.hidden = false; e2.textContent = "Say who the compensation should be paid to."; return; }
+      if ((c.assirRef && !c.assirRefName) || (c.outRef && !c.outRefName)) { const e2 = $("#crf-err"); e2.hidden = false; e2.textContent = "Add the name for each referral amount."; return; }
+      c.status = "submitted"; c.submitted = TODAY; c.returnNote = ""; d.crf = c; addLog(d, `${actor()} submitted the commission request`); closeModal(); save(); render(); toast("Commission request sent to Petrina."); break; }
+    case "crf-view": crfReadModal(d, null); break;
+    case "crf-review": crfReadModal(d, S.role === "tc" ? "tc" : "acct"); break;
+    case "crf-return": { const n = val("crf-note"); if (!n) { const e2 = $("#crf-err"); e2.hidden = false; e2.textContent = "Add a note so the agent knows what to change."; return; }
+      d.crf.status = "returned"; d.crf.returnNote = n; addLog(d, `Petrina returned the CRF: ${n}`); closeModal(); save(); render(); toast("Returned to " + agentName(d).split(" ")[0] + "."); break; }
+    case "crf-tc-ok": d.crf.status = "tc"; d.crf.tcApproved = TODAY; addLog(d, "Petrina approved the CRF and sent it to accounting"); save(); render(); emailModal(d); break;
+    case "crf-acct-ok": d.crf.status = "acct"; d.crf.acctApproved = TODAY; addLog(d, "Accounting approved the CRF"); closeModal(); save(); render(); toast("CRF approved. Mark it paid once the wire goes out."); break;
+    case "paid": d.crf.status = "paid"; d.crf.paid = TODAY; addLog(d, "Accounting marked the commission paid"); save(); render(); toast("Marked paid. " + agentName(d).split(" ")[0] + " was notified."); break;
+  }
+});
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.name === "dtype") syncNewDeal();
+  if (t.dataset && t.dataset.act === "task") { const d = deal(t.dataset.id); d.tasks[t.dataset.i] = t.checked; if (t.checked) addLog(d, `Petrina: ${OFFICE_TASKS[t.dataset.i]}`); save(); render(); }
+  if (t.dataset && t.dataset.act === "office") { S.views.leadership = { name: "home", office: t.value }; save(); render(); }
+  if (t.id === "file-picker" && pendingUpload) {
+    const f = t.files[0]; if (!f) return;
+    const d = deal(pendingUpload.id), def = defsFor(d).find(x => x.key === pendingUpload.key);
+    setItem(d, pendingUpload.key, { status: "submitted", file: f.name, date: TODAY, note: "" });
+    addLog(d, `${actor()} uploaded ${def.name}`);
+    pendingUpload = null; save(); render();
+    toast(`Sent "${f.name}" to Petrina. In the real app it's filed straight to Dropbox.`);
+  }
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+render();
+})();
+</script>

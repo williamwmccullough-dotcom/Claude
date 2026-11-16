@@ -69,6 +69,20 @@ Running record of decisions and context so every session starts from the same pl
 - Keep wire instructions and bank info out of the app.
 - Sign-in uses company Microsoft accounts. Only `aspensnowmasssir.com` addresses can log in.
 
+## Source documents (from owner, Nov 2026; may be out of date)
+Kept out of the repo because the examples contain real client data. Summarized here.
+- **New-listing intake forms:** Residential Listing Form (dash), MLS Input Form (Aspen Glenwood MLS), Information Form (marketing/brochure/showing), Listing Checklist.
+- **Listing Checklist office tasks:** entered into MLS, Crest, brochure created and ordered, ICM, showing instructions, B2B, admin email, advertising. Changes (amend/extend) redo MLS, brochure, B2B, Crest, admin email, ICM.
+- **Closed File Checklist (transaction):** agency disclosure or buyer agency contract (not if our listing), title commitment, square footage disclosure (not vacant land), seller's property disclosure, inspection objection and resolution, inspection report, inventory list, lead paint disclosure (built before 1978), contracts, amend/extends, listing checklist, closing checklist, brochure, MLS listing sheet, listing contract (only if our listing), earnest money check/wire copy, earnest money receipt, closing documents, closing instructions (signed by buyer, seller, listing broker and title), closing funds check/wire copy, CRF. "Check not released to broker until file fully executed."
+- **Closing Checklist:** an agent's to-do list during the contract (create Under Contract Form and send to TC, MLS status change, dates and deadlines, disclosures, due diligence, closing instructions, utilities, signage, close MLS).
+- **Title advice:** a bank wire notice to CLMF LLC dba ASSIR with date, amount, sender (title company), and a reference naming the commission side, agent and property.
+- **CRF (Compensation Request Form – Sales):** MLS #, dash trans #, address, seller/buyer legal names, closing date, title company, list/sold price, listing/selling brokers, compensation % offered each side, adjustment amount and explanation, broker gross compensation, ASSIR and outside referral fees, then:
+  - gross less referrals → Sotheby's/admin 5% → remainder × agent split = net to agent; rest = ASSIR compensation.
+  - Payable-to name, requested by. Broker must approve (signature or email). Attach referral or compensation reduction agreements.
+
+## Mockup
+- `mockup/index.html` — clickable prototype with example data (published as a private artifact).
+
 ## Open items
 - [ ] Owner to provide: document checklists for each sales deal type and all blank forms, including the CRF.
 - [ ] Owner to provide: the exact Dropbox folder naming sequence.
