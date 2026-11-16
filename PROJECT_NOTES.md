@@ -32,18 +32,29 @@ Running record of decisions and context so every session starts from the same pl
   - **Listing (seller representation)**: its own deal. The file must be complete **before the property goes on the MLS**. It ends there, unless the listing contract is later amended or extended, which reopens it for those documents.
   - **Seller-side transaction** (the listed property goes under contract): a **separate** deal from the listing.
   - **Buyer-side transaction**: its own deal.
+  - **Dual agency** (same agent represents buyer and seller) = **two deals**, one buy side and one sell side, linked. A "dual agency" option links them, and a document that belongs on both sides is uploaded once and filed to both automatically.
 - **Later:** rentals (top priority after sales; show a "coming soon" placeholder for now), referrals, land, new development, commercial, terminated contracts, expired or withdrawn listings. Each may need its own checklist.
 
 ## People and access
-- **Agents** own their deals. A deal can have **co-agents**.
-- **Delegates:** an agent can assign assistants or team members who get **standing access to all of that agent's deals**. They can open new deals and amend existing ones without asking the agent each time. The agent sets this up once, not per deal.
+- **Agents** own their deals.
+- **Assistants:** an agent assigns them once and they get **standing access to all of that agent's deals**. They can open new deals and amend existing ones without asking the agent each time. One assistant can work for **several agents**.
+- **Co-agents** are added **deal by deal**. They only see the deals they're added to.
 - **TC assignment:** by office, then by agent. Each agent has a TC.
-- **Staff with access:** owner, managing broker, accounting, VP, director of sales, and (later) rentals TCs.
+- **Staff with access:** owner, managing broker, VP, director of sales, accounting, and (later) rentals TCs.
+  - Staff can **view** deals only. **Only TCs approve documents.**
+  - **Accounting sees completed files only.**
 
 ## Approval and payment
 - **TCs approve every document.** An upload stays "submitted" until a TC approves it. A rejection must include a note telling the agent what to fix.
 - **A transaction file must be complete before commission is paid.** This is the company's leverage for getting a fully compliant file.
-- When a file is complete, the app **emails accounting@aspensnowmasssir.com** with the **commission request form (CRF)** attached or included, so accounting knows who to pay and how much.
+- **Commission flow** (transaction deals):
+  1. All transaction documents approved by the TC; file is complete.
+  2. Title company receives funds and sends an **"advice"** (amount and deal name) to the brokerage.
+  3. Brokerage sends the advice to the agent.
+  4. **Agent fills out the CRF** (commission request form).
+  5. **TC approves** the CRF.
+  6. **Accounting approves** the CRF, then wires the agent.
+- The app notifies **accounting@aspensnowmasssir.com** at the accounting step, with the CRF included.
 
 ## Notifications
 - Email and in-app reminders, **every other day**, listing the missing and rejected documents.
@@ -61,8 +72,6 @@ Running record of decisions and context so every session starts from the same pl
 - [ ] Owner to provide: the exact Dropbox folder naming sequence.
 - [ ] Pick pilot agents and a pilot TC.
 - [ ] Confirm Colorado record-retention requirements with counsel or the Colorado Real Estate Commission.
-- [ ] Clarify: when one agent represents both buyer and seller, is that one deal or two?
-- [ ] Clarify: who fills out the CRF and when, and does anyone approve it before accounting?
-- [ ] Clarify: what each staff role can see and do.
-- [ ] Clarify: which TC covers which office(s).
-- [ ] Clarify: can an assistant work for more than one agent?
+- [ ] TBD: which TC covers which office(s).
+- [ ] Clarify: who receives the title advice and puts it into the deal (TC uploads it?).
+- [ ] Clarify: does accounting approve the CRF inside the app, or by email outside it?
