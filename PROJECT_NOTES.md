@@ -6,7 +6,7 @@ Running record of decisions and context so every session starts from the same pl
 - Aspen Snowmass Sotheby's International Realty (website: sothebysrealty.com/aspensnowmasssir), a brokerage in **Colorado**. The owner is the app owner and first admin.
 - **180 agents**, **6 sales transaction coordinators (TCs)**.
 - **9 offices**: Aspen (3), Snowmass (2), Basalt (1), Carbondale (1), Glenwood Springs (1). The process is the same at every office.
-- Corporate transaction system: **dash** (TCs enter deal data manually; no integration planned).
+- Corporate transaction system: **dash**. The **front desk** enters new deals manually (no integration planned).
 - File storage: **Dropbox Business**, with folders sorted by property address.
 - Email: **Microsoft 365 / Outlook**. Everyone has a company email on the `aspensnowmasssir.com` domain.
 - No existing transaction-management app.
@@ -14,7 +14,7 @@ Running record of decisions and context so every session starts from the same pl
 ## Current process (to be replaced)
 1. Agent gets a new listing (sell side) or goes under contract (buy side).
 2. Agent fills out PDF intake forms and emails them to a shared TC inbox.
-3. TCs enter the info into dash.
+3. Staff enter the info into dash.
 4. Agent receives a document checklist and emails documents as the deal progresses.
 
 ## Pain points
@@ -24,7 +24,8 @@ Running record of decisions and context so every session starts from the same pl
 
 ## What the app does
 - Agents: create a deal, see the checklist status of each of their deals, and upload PDFs to checklist items.
-- TCs: see a queue of new deals to enter in dash, monitor deals and missing documents, and approve or reject documents.
+- Front desk: a queue of new deals to enter in dash and the MLS, and listing office tasks.
+- TCs: monitor deals and missing documents, and approve or reject documents.
 - Documents **pass through** the app into Dropbox. The app does not keep copies of files; it only stores deal details, checklist status and a link to each file in Dropbox.
 
 ## Deal types
@@ -69,7 +70,7 @@ Running record of decisions and context so every session starts from the same pl
 - Owner owns, hosts and pays for the app (corporate card).
 - Start small (MVP), pilot with a few agents, expect bugs early.
 - No budget or timeline; side project.
-- dash stays a manual entry step for TCs.
+- dash stays a manual entry step, owned by the **front desk** (not TCs).
 - Keep wire instructions and bank info out of the app.
 - Sign-in uses company Microsoft accounts. Only `aspensnowmasssir.com` addresses can log in.
 
@@ -90,7 +91,6 @@ Kept out of the repo because the examples contain real client data. Summarized h
 
 ## Open items
 - [ ] Owner to provide: current checklists and blank forms for each sales deal type, including the CRF (coming).
-- [ ] Clarify: who enters new deals in dash, the front desk or the TCs (mockup lets both).
 - [ ] Owner to provide: the exact Dropbox folder naming sequence.
 - [ ] Pick pilot agents and a pilot TC.
 - [ ] Confirm Colorado record-retention requirements with counsel or the Colorado Real Estate Commission.

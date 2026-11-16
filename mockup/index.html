@@ -293,7 +293,7 @@ function seed() {
           mls_form: st("submitted", { file: "MLS Input Form (generated).pdf" }),
           info_form: st("rejected", { file: "Information Form.pdf", note: "Brochure titles and highlights are blank. Every line has to be complete before marketing can build the brochure." })
         }, tasks: {}, extra: [],
-        log: [["Nov 9", "Jamie opened the listing"], ["Nov 10", "Petrina entered it in dash (#5101)"], ["Nov 12", "Petrina returned the Information Form"]] },
+        log: [["Nov 9", "Jamie opened the listing"], ["Nov 10", "Front desk entered it in dash (#5101)"], ["Nov 12", "Petrina returned the Information Form"]] },
       { id: 2, type: "seller", agent: "jamie", address: "42 Example Court", city: "Snowmass Village", propType: "Single family", yearBuilt: "1972", price: 4100000, sellers: "R. and K. Sample", buyers: "Placeholder Holdings LLC", mls: "190311", dash: "3877", coAgents: ["Morgan Reyes"], titleCo: "Land Title Guarantee", contractDate: "2026-10-28", closingDate: "2026-12-15", opened: "2026-10-28",
         items: {
           uc_form: st("approved"), contract: st("approved", { file: "Contract + Counterproposal 1.pdf" }), listing_contract: st("approved", { file: "Listing Contract (from listing file).pdf" }), mls_sheet: st("approved"), brochure: st("approved"),
@@ -301,7 +301,7 @@ function seed() {
           lbp: st("rejected", { file: "Lead Paint Disclosure.pdf", note: "Buyer's initials are missing on page 2." }),
           inventory: st("na-req", { note: "Jamie: no personal property is included in the sale." })
         }, extra: [],
-        log: [["Oct 28", "Jamie opened the deal"], ["Oct 29", "Petrina entered it in dash (#3877)"], ["Nov 12", "Petrina returned the Lead-Based Paint Disclosure"]] },
+        log: [["Oct 28", "Jamie opened the deal"], ["Oct 29", "Front desk entered it in dash (#3877)"], ["Nov 12", "Petrina returned the Lead-Based Paint Disclosure"]] },
       { id: 3, type: "buyer", agent: "jamie", address: "7 Demo Ranch Road", city: "Carbondale", propType: "Vacant land", yearBuilt: "", price: 875000, sellers: "Outside listing seller", buyers: "T. Example", mls: "190455", dash: "", inHouse: false, coAgents: [], titleCo: "Title Company of the Rockies", contractDate: "2026-11-14", closingDate: "2027-01-08", opened: "2026-11-14",
         items: { uc_form: st("submitted", { file: "Under Contract Form (generated).pdf" }), contract: st("submitted", { file: "Executed Contract.pdf" }) }, extra: [],
         log: [["Nov 14", "Jamie opened the deal"]] },
@@ -384,12 +384,12 @@ function counts(d) {
 function stage(d) {
   const p = progress(d);
   if (d.type === "listing") {
-    if (!d.dash) return ["New: TC entering in dash", "info"];
+    if (!d.dash) return ["New: front desk entering in dash", "info"];
     if (!p.complete) return [d.extra.length ? "Listing change in progress" : "Gathering documents", "warn"];
     const allTasks = OFFICE_TASKS.every((_, i) => d.tasks && d.tasks[i]);
     return allTasks ? ["Active on MLS", "ok"] : ["Ready for MLS", "ok"];
   }
-  if (!d.dash) return ["New: TC entering in dash", "info"];
+  if (!d.dash) return ["New: front desk entering in dash", "info"];
   if (!p.complete) return ["Under contract", "warn"];
   if (!d.advice) return ["File complete: waiting on title advice", "info"];
   const c = d.crf;
@@ -570,7 +570,7 @@ function renderDeal(d) {
   }
   side += `<div class="panel"><div class="panel-h"><h3>Activity log</h3><span class="small muted">Every change, who made it</span></div><div class="panel-b"><ul class="log">${(d.log || []).slice().reverse().map(l => `<li><span class="muted num">${esc(l[0])}</span><span>${esc(l[1])}</span></li>`).join("")}</ul></div></div>`;
 
-  const tcEntry = (isTc || role === "frontdesk") && !d.dash ? `<div class="panel"><div class="panel-b row between"><div><b>New deal: enter it in dash</b><div class="small muted">Everything you need is on this page. Type the dash transaction number when you're done.</div></div>
+  const tcEntry = role === "frontdesk" && !d.dash ? `<div class="panel"><div class="panel-b row between"><div><b>New deal: enter it in dash</b><div class="small muted">Everything you need is on this page. Type the dash transaction number when you're done.</div></div>
     <div class="row"><input id="dash-${d.id}" placeholder="dash #" class="num" style="border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:110px;background:var(--surface)"><button class="btn primary" data-act="dash" data-id="${d.id}">Save</button></div></div></div>` : "";
 
   return `<div class="stack">
@@ -601,7 +601,7 @@ function renderTcHome() {
   const adviceNeeded = list.filter(d => d.type !== "listing" && progress(d).complete && !d.advice);
   const crfs = list.filter(d => d.crf && d.crf.status === "submitted");
   const tasks = list.filter(d => d.type === "listing" && progress(d).complete && !OFFICE_TASKS.every((_, i) => d.tasks && d.tasks[i]));
-  const tabs = [["review", "Documents to review", reviewItems.length], ["new", "Enter in dash", newDeals.length], ["advice", "Title advice", adviceNeeded.length], ["crf", "CRFs to approve", crfs.length], ["all", "All deals", list.length]];
+  const tabs = [["review", "Documents to review", reviewItems.length], ["advice", "Title advice", adviceNeeded.length], ["crf", "CRFs to approve", crfs.length], ["all", "All deals", list.length]];
   let body = "";
   if (tab === "review") {
     body = reviewItems.length ? `<div class="tablewrap"><table><thead><tr><th>Document</th><th>Deal</th><th>Agent</th><th>Submitted</th><th></th></tr></thead><tbody>` + reviewItems.map(r => `<tr>
@@ -612,8 +612,7 @@ function renderTcHome() {
         ? `<button class="btn sm ok" data-act="approve-na" data-id="${r.d.id}" data-key="${r.def.key}">Agree</button><button class="btn sm danger" data-act="reject" data-id="${r.d.id}" data-key="${r.def.key}">It's needed</button>`
         : `<button class="btn sm ok" data-act="approve" data-id="${r.d.id}" data-key="${r.def.key}">Approve</button><button class="btn sm danger" data-act="reject" data-id="${r.d.id}" data-key="${r.def.key}">Return</button>`}</div></td></tr>`).join("") + `</tbody></table></div>`
       : `<div class="empty">Nothing waiting for review. New uploads from your agents show up here.</div>`;
-  } else if (tab === "new") body = dealRows(newDeals, { showAgent: true, tc: true, empty: "No new deals to enter in dash." });
-  else if (tab === "advice") body = adviceNeeded.length ? `<div class="empty" style="padding-bottom:0">These files are complete. When the title advice arrives, upload it to the deal and the agent is told to submit their CRF.</div>` + dealRows(adviceNeeded, { showAgent: true }) : `<div class="empty">No complete files waiting on a title advice.</div>`;
+  } else if (tab === "advice") body = adviceNeeded.length ? `<div class="empty" style="padding-bottom:0">These files are complete. When the title advice arrives, upload it to the deal and the agent is told to submit their CRF.</div>` + dealRows(adviceNeeded, { showAgent: true }) : `<div class="empty">No complete files waiting on a title advice.</div>`;
   else if (tab === "crf") body = dealRows(crfs, { showAgent: true, empty: "No commission requests waiting on you." });
   else body = dealRows(list, { showAgent: true, tc: true });
 
@@ -621,7 +620,6 @@ function renderTcHome() {
     <div><h1>Good morning, Petrina</h1><p class="muted">You cover Jamie Alvarez, Morgan Reyes and Taylor Brooks in this example.</p></div>
     <div class="attn">
       <div class="cell ${reviewItems.length ? "hot" : ""}"><div class="label">To review</div><div class="big num">${reviewItems.length}</div><div class="small muted">Uploads and N/A requests</div></div>
-      <div class="cell"><div class="label">Enter in dash</div><div class="big num">${newDeals.length}</div><div class="small muted">New deals</div></div>
       <div class="cell"><div class="label">Title advice</div><div class="big num">${adviceNeeded.length}</div><div class="small muted">Complete files waiting on funds</div></div>
       <div class="cell"><div class="label">CRFs</div><div class="big num">${crfs.length}</div><div class="small muted">Waiting on your approval</div></div>
     </div>
@@ -696,7 +694,7 @@ function renderLeaderHome() {
       <div class="field" style="width:200px"><label for="office-filter">Office</label><select id="office-filter" data-act="office">${offices.map(o => `<option ${o === office ? "selected" : ""}>${o}</option>`).join("")}</select></div></div>
     <div class="attn">
       <div class="cell"><div class="label">Listings in progress</div><div class="big num">${n(d => d.type === "listing" && !sg(d).startsWith("Active"))}</div><div class="small muted">Not yet ready for MLS</div></div>
-      <div class="cell"><div class="label">Under contract</div><div class="big num">${n(d => d.type !== "listing" && ["Under contract", "New: TC entering in dash"].includes(sg(d)))}</div><div class="small muted">Files still open</div></div>
+      <div class="cell"><div class="label">Under contract</div><div class="big num">${n(d => d.type !== "listing" && ["Under contract", "New: front desk entering in dash"].includes(sg(d)))}</div><div class="small muted">Files still open</div></div>
       <div class="cell"><div class="label">Waiting on payment</div><div class="big num">${n(d => d.type !== "listing" && progress(d).complete && sg(d) !== "Paid")}</div><div class="small muted">Complete files, commission not paid</div></div>
       <div class="cell ${fix ? "hot" : ""}"><div class="label">Returned to agents</div><div class="big num">${fix}</div><div class="small muted">${review} more waiting on TC review</div></div>
     </div>
@@ -747,7 +745,7 @@ function newDealModal() {
       <div class="field tx-only"><label for="nd-inhouse">Is it an ASSIR listing?</label><select id="nd-inhouse"><option value="no">No, another brokerage's listing</option><option value="yes">Yes, our listing</option></select></div>
       ${fld("nd-co", "Co-agent on this deal (optional)", "", { ph: "Name of another ASSIR agent", full: true })}
     </div>
-    <div class="callout"><b>You type this once.</b> It fills in <span id="nd-fills"></span> so you never re-enter the same address, price or names. Your TC is notified when you save.</div>
+    <div class="callout"><b>You type this once.</b> It fills in <span id="nd-fills"></span> so you never re-enter the same address, price or names. The front desk and your TC are notified when you save.</div>
     <p class="err" id="nd-err" hidden></p>`;
   modal("New deal", "Pick the kind of deal, then the basics.", body, `<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="create">Create deal</button>`, true);
   syncNewDeal();
@@ -778,7 +776,7 @@ function createDeal() {
     S.deals.unshift(created);
   }
   closeModal(); save();
-  toast(t === "dual" ? "Two linked deals created. Petrina has been notified." : "Deal created. Petrina has been notified.");
+  toast(t === "dual" ? "Two linked deals created. The front desk and Petrina have been notified." : "Deal created. The front desk and Petrina have been notified.");
   go({ name: "deal", id: created.id });
 }
 
