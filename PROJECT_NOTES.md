@@ -8,6 +8,8 @@ Running record of decisions and context so every session starts from the same pl
 - Corporate transaction system: **dash** (TCs enter deal data manually; no integration planned).
 - File storage: **Dropbox** (already in use).
 - No existing transaction-management app.
+- Brokerage: Aspen Snowmass Sotheby's International Realty (website: sothebysrealty.com/aspensnowmasssir). Owner is the app owner and first admin.
+- Everyone has a company email on the `aspensnowmasssir.com` domain.
 
 ## Current process (to be replaced)
 1. Agent gets a new listing (sell side) or goes under contract (buy side).
@@ -26,9 +28,11 @@ Running record of decisions and context so every session starts from the same pl
 - No budget or timeline; side project.
 - dash stays a manual entry step for TCs.
 - Keep wire instructions and bank info out of the app.
+- Sign-in uses company email accounts. Only `aspensnowmasssir.com` addresses can log in.
+- **TCs must approve every document.** An upload is "submitted" until a TC approves it. Rejections need a note telling the agent what to fix.
 
 ## Open items
 - [ ] Owner to provide: document checklists (listing and buy side) and all blank intake forms.
 - [ ] Confirm Colorado record-retention requirements with counsel or the Colorado Real Estate Commission.
 - [ ] Decide Dropbox folder structure and which Dropbox account the app connects to.
-- [ ] Decide how agents sign in (email link vs. Google/Microsoft account).
+- [ ] Confirm whether company email runs on Google Workspace or Microsoft 365.
