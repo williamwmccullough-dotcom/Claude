@@ -49,12 +49,14 @@ Running record of decisions and context so every session starts from the same pl
 - **A transaction file must be complete before commission is paid.** This is the company's leverage for getting a fully compliant file.
 - **Commission flow** (transaction deals):
   1. All transaction documents approved by the TC; file is complete.
-  2. Title company receives funds and sends an **"advice"** (amount and deal name) to the brokerage.
-  3. Brokerage sends the advice to the agent.
+  2. Title company receives funds and sends an **"advice"** (amount and deal name) to the **TCs**.
+  3. **TC uploads the advice to the deal in the app** (replaces emailing it), and the app notifies the agent.
   4. **Agent fills out the CRF** (commission request form).
   5. **TC approves** the CRF.
-  6. **Accounting approves** the CRF, then wires the agent.
-- The app notifies **accounting@aspensnowmasssir.com** at the accounting step, with the CRF included.
+  6. **Accounting approves** the CRF **in the app**, then wires the agent and marks it paid.
+- The app emails **accounting@aspensnowmasssir.com** when a CRF is ready for them, with the CRF included.
+- Both CRF approvals (TC and accounting) are recorded on the deal, so everyone can see where payment stands.
+- Exception to "only TCs approve": **accounting approves CRFs** (and only CRFs).
 
 ## Notifications
 - Email and in-app reminders, **every other day**, listing the missing and rejected documents.
@@ -73,5 +75,3 @@ Running record of decisions and context so every session starts from the same pl
 - [ ] Pick pilot agents and a pilot TC.
 - [ ] Confirm Colorado record-retention requirements with counsel or the Colorado Real Estate Commission.
 - [ ] TBD: which TC covers which office(s).
-- [ ] Clarify: who receives the title advice and puts it into the deal (TC uploads it?).
-- [ ] Clarify: does accounting approve the CRF inside the app, or by email outside it?
