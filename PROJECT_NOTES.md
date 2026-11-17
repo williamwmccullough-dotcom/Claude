@@ -171,6 +171,8 @@ All documents received as of Nov 17, 2026. Next: rebuild the mockup's checklists
 
 ## Mockup
 - `mockup/index.html` — clickable prototype with example data (published as a private artifact).
+- Nov 17 rebuild uses the current forms: listing package (drafting form, LC50, Seller Advisory and MLS form picked by property type, dash form with town area description), transaction package from the Under Contract/Sold checklist (buyer agreement + Buyer Advisory on every buyer side), fell-through path (Notice to Terminate, Earnest Money Release), listing changes (price change, extension, withdrawn, cancelled) with EX Amend file naming, auto-written admin emails, CRF closing details (cash/loan, seller concessions), Aspen/SMV/MV routing, commercial and rental placeholders.
+- Any checklist item can be flagged "Doesn't apply"; the TC confirms. The Information Form was dropped (not in the new set) — confirm it's retired.
 
 ## Open items
 - [ ] Owner to provide: current checklists and blank forms for each sales deal type, including the CRF (coming).

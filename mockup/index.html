@@ -218,66 +218,85 @@ tr.click { cursor: pointer; } tr.click:hover td { background: var(--surface-2); 
 "use strict";
 
 // ---------- Reference data ----------
-const TODAY = "2026-11-16";
+const TODAY = "2026-11-17";
 const PEOPLE = {
-  jamie:  { name: "Jamie Alvarez", office: "Aspen", tc: "petrina", split: 0.9 },
-  morgan: { name: "Morgan Reyes", office: "Aspen", tc: "petrina", split: 0.85 },
-  taylor: { name: "Taylor Brooks", office: "Basalt", tc: "petrina", split: 0.8 },
-  riley:  { name: "Riley Chen", office: "Snowmass", tc: "dana", split: 0.8 },
-  quinn:  { name: "Quinn Harper", office: "Glenwood Springs", tc: "dana", split: 0.75 }
+  jamie:  { name: "Jamie Alvarez", office: "Aspen", tc: "aspen", split: 0.9 },
+  morgan: { name: "Morgan Reyes", office: "Aspen", tc: "aspen", split: 0.85 },
+  taylor: { name: "Taylor Brooks", office: "Basalt", tc: "mv", split: 0.8 },
+  riley:  { name: "Riley Chen", office: "Snowmass", tc: "smv", split: 0.8 },
+  quinn:  { name: "Quinn Harper", office: "Glenwood Springs", tc: "mv", split: 0.75 }
 };
-const TCS = { petrina: "Petrina", dana: "Dana (example TC)" };
+const TCS = { aspen: "Petrina (Aspen transactions)", smv: "SMV transactions", mv: "MV transactions" };
 const ROLES = [
   { id: "agent", label: "Agent", who: "Jamie Alvarez · Aspen" },
   { id: "assistant", label: "Assistant", who: "Casey Lin · assists Jamie Alvarez and Morgan Reyes" },
-  { id: "tc", label: "Transaction Coordinator", who: "Petrina · TC for Jamie, Morgan and Taylor" },
+  { id: "tc", label: "Transaction Coordinator", who: "Petrina · Aspen transactions" },
   { id: "frontdesk", label: "Front Desk", who: "Alex (example) · Front desk, all offices" },
   { id: "accounting", label: "Accounting", who: "Accounting · accounting@aspensnowmasssir.com" },
   { id: "leadership", label: "Leadership", who: "Will McCullough · view only" }
 ];
 const CITIES = ["Aspen", "Snowmass Village", "Basalt", "Carbondale", "Glenwood Springs", "Woody Creek", "Old Snowmass"];
-const PROP_TYPES = ["Single family", "Condominium", "Townhouse", "Duplex", "Vacant land", "Ranch / acreage"];
+const PROP_TYPES = ["Single family", "Condominium", "Townhouse", "Duplex", "Fractional", "Ranch / acreage", "Vacant land"];
 const TITLE_COS = ["Land Title Guarantee", "Title Company of the Rockies", "Stewart Title", "Other"];
 const TYPE_LABEL = { listing: "Listing", seller: "Seller side", buyer: "Buyer side" };
+const AREA = {
+  "Aspen": "Once a silver mining town, Aspen is now a world-renowned outdoor recreation oasis and cultural mecca for the arts...",
+  "Snowmass Village": "Sitting in a valley cradled by mountains, Snowmass Village is known for its bounty of summer recreation...",
+  "Basalt": "Located at the confluence of the Roaring Fork and Frying Pan Rivers, Basalt is 16 miles north of Aspen...",
+  "Carbondale": "Carbondale is located at the base of the majestic Mt. Sopris at the confluence of the Roaring Fork and Crystal Rivers...",
+  "Glenwood Springs": "At the confluence of the Colorado River and the Roaring Fork..."
+};
+const isLand = d => d.propType === "Vacant land";
+const category = d => isLand(d) ? "Vacant Land" : "Residential";
+const mlsVersion = d => isLand(d) ? "RES Vacant Land" : d.propType === "Fractional" ? "Fractional" : "Residential";
 
 const LISTING_ITEMS = [
-  { key: "listing_contract", name: "Exclusive Right-to-Sell Listing Contract", hint: "Fully signed by every seller and by you, with any addenda." },
-  { key: "dash_form", name: "Residential Listing Form (dash)", hint: "Mostly filled in from what you entered when you opened this deal. Add the features and remarks, then submit.", prefill: true },
-  { key: "mls_form", name: "MLS Input Form (Aspen Glenwood MLS)", hint: "Address, price, beds and baths are already filled in from this deal.", prefill: true },
-  { key: "info_form", name: "Information Form (marketing)", hint: "Every line must be complete and high-resolution photos must be available for the brochure, ads, B2B and website.", prefill: true }
+  { key: "drafting", name: "Listing Contract Drafting Form", hint: "Filled in from this deal. Used to draft the listing contract.", prefill: true },
+  { key: "listing_contract", name: "Exclusive Right-to-Sell Listing Contract (LC50)", hint: "Fully signed by every seller and by you." },
+  { key: "seller_adv", name: d => "Seller Advisory (" + category(d) + ")", hint: "Signed by the seller. The app picks the version for the property type." },
+  { key: "dash_form", name: "dash Residential Sale Listing", hint: "Address, price, beds, seller and the town's standard area description are filled in. Add the style, features and remarks.", prefill: true },
+  { key: "mls_form", name: d => "MLS Input Form (" + mlsVersion(d) + ")", hint: "The app picks the Aspen Glenwood MLS form for the property type. Address, price and seller are filled in.", prefill: true }
 ];
-const OFFICE_TASKS = ["Entered into MLS", "Entered into Crest", "Brochure created and ordered", "Entered into ICM", "Showing instructions entered", "B2B sent", "Admin email sent", "Advertising"];
+const OFFICE_TASKS = ["Assessor record saved", "Entered in MLS", "Entered in dash", "Entered in AJAX", "Showing instructions (MLS, ShowingTime, AJAX)", "B2B created", "Brochure created", "Admin email sent", "Seller marketing report scheduled", "Caravan tour (if applicable)"];
+const CHANGE_TASKS = [1, 2, 3, 5, 6, 7]; // MLS, dash, AJAX, B2B, brochure, admin email get redone after a change
+const CHANGE_TYPES = ["Price change", "Extended", "Price change/Extended", "Terms changed", "Withdrawn", "Cancelled"];
 
 const TX_ITEMS = [
-  { key: "uc_form", name: "Under Contract Form", hint: "Filled in from this deal. Replaces emailing the form to your TC.", prefill: true },
-  { key: "contract", name: "Contract to Buy and Sell", hint: "Fully executed, including every counterproposal and addendum.", shared: true },
-  { key: "agency", name: "Agency Disclosure or Buyer Agency Contract", cond: d => d.type === "buyer" && !d.inHouse, na: "Not needed: it's our listing" },
-  { key: "listing_contract", name: "Listing Contract", hint: "Copied from the listing file when the deals are linked.", cond: d => d.type === "seller", na: "Not needed: not our listing" },
-  { key: "mls_sheet", name: "MLS Listing Sheet" },
-  { key: "brochure", name: "Brochure", cond: d => d.type === "seller", na: "Not needed: not our listing" },
-  { key: "em_receipt", name: "Earnest Money Receipt from title company", shared: true },
-  { key: "em_copy", name: "Copy of earnest money check or wire", shared: true },
+  { key: "uc_sold", name: "Under Contract/Sold Checklist", hint: "Filled in from this deal. Replaces emailing the form to the transactions inbox.", prefill: true, keep: true },
+  { key: "contract", name: "Contract to Buy and Sell (CBS1) and Counterproposals", hint: "Fully executed, including every counterproposal and addendum.", shared: true, keep: true },
+  { key: "buyer_agree", name: "Buyer Agreement (Exclusive Right-to-Buy or Buyer Transaction-Broker)", cond: d => d.type === "buyer", na: "Buyer-side only", keep: true },
+  { key: "buyer_adv", name: d => "Buyer Advisory (" + category(d) + ")", hint: "Signed by the buyer.", cond: d => d.type === "buyer", na: "Buyer-side only", keep: true },
+  { key: "comp_agree", name: "Compensation Agreement", cond: d => d.type === "buyer", na: "Buyer-side only", optional: true },
+  { key: "referral", name: "Referral Agreement", hint: "Only if a referral fee is paid on this deal.", optional: true },
+  { key: "listing_contract", name: "Listing Contract and Seller Advisory", hint: "Copied from the listing file.", cond: d => d.type === "seller", na: "Seller-side only", keep: true },
+  { key: "em", name: "Earnest Money Receipt and copy of check or wire", shared: true },
   { key: "title_commit", name: "Title Commitment", shared: true },
   { key: "spd", name: "Seller's Property Disclosure", hint: "Fully executed.", shared: true },
-  { key: "sqft", name: "Square Footage Disclosure", hint: "Fully executed.", cond: d => d.propType !== "Vacant land", na: "Not needed on vacant land", shared: true },
-  { key: "lbp", name: "Lead-Based Paint Disclosure", hint: "Required for anything built before 1978.", cond: d => d.yearBuilt && +d.yearBuilt < 1978, na: "Not needed: built 1978 or later", shared: true },
-  { key: "insp_report", name: "Inspection Report", optional: true },
-  { key: "insp_obj", name: "Inspection Objection and Inspection Resolution", optional: true, shared: true },
+  { key: "sow", name: "Source of Water Addendum", shared: true },
+  { key: "sqft", name: "Square Footage Disclosure", hint: "Fully executed.", cond: d => !isLand(d), na: "Not needed on vacant land", shared: true },
+  { key: "lbp", name: "Lead-Based Paint Disclosure", hint: "Required for anything built before 1978. Year built is checked against the assessor record.", cond: d => d.yearBuilt && +d.yearBuilt < 1978, na: "Not needed: built 1978 or later, or vacant land", shared: true },
+  { key: "insp", name: "Inspection Objection, Report and Resolution", shared: true },
   { key: "inventory", name: "Inventory List", optional: true, shared: true },
-  { key: "amend", name: "Amend/Extend Agreements", hint: "Every amend/extend signed during the deal.", optional: true, shared: true },
-  { key: "closing_instr", name: "Closing Instructions", hint: "Broker-generated version signed by buyer, seller, listing broker and title company.", shared: true },
-  { key: "closing_docs", name: "Closing Documents", hint: "Settlement statement and closing package.", shared: true },
-  { key: "funds", name: "Copy of closing funds check or wire receipt", shared: true }
+  { key: "amend", name: "Amend/Extends", hint: "Every amend/extend signed during the deal.", optional: true, shared: true },
+  { key: "dd_other", name: "Other due diligence documents", optional: true },
+  { key: "closing_instr", name: "Closing Instructions (CTMe)", hint: "Signed by buyer, seller, listing broker and title company.", shared: true },
+  { key: "closing_docs", name: "Closing documents from title company", shared: true },
+  { key: "funds", name: "Copy of closing funds check or wire", shared: true }
+];
+const TERM_ITEMS = [
+  { key: "ntt", name: "Notice to Terminate", hint: "Signed termination notice.", shared: true, keep: true },
+  { key: "emr", name: "Earnest Money Release", hint: "Signed by both parties.", shared: true, keep: true }
 ];
 
 // ---------- Example data ----------
 function allApproved(type, extra) {
   const defs = type === "listing" ? LISTING_ITEMS : TX_ITEMS;
   const o = {};
-  defs.forEach(d => { o[d.key] = { status: "approved", file: d.name + ".pdf", by: "agent", date: "2026-10-20" }; });
+  defs.forEach(d => { o[d.key] = { status: "approved", file: (typeof d.name === "string" ? d.name : "Advisory") + ".pdf", by: "agent", date: "2026-10-20" }; });
   return Object.assign(o, extra || {});
 }
 function st(status, extra) { return Object.assign({ status: status, date: "2026-11-12" }, extra || {}); }
+const OPT_NA = { comp_agree: st("na"), referral: st("na"), inventory: st("na"), amend: st("na"), dd_other: st("na") };
 
 function seed() {
   return {
@@ -286,62 +305,62 @@ function seed() {
     nextId: 20,
     team: { jamie: ["Casey Lin"], morgan: ["Casey Lin"] },
     deals: [
-      { id: 1, type: "listing", agent: "jamie", address: "100 Sample Way, Unit 4", city: "Aspen", propType: "Condominium", yearBuilt: "1984", price: 2950000, sellers: "Example Seller Trust", buyers: "", mls: "", dash: "5101", coAgents: [], opened: "2026-11-09",
+      { id: 1, type: "listing", agent: "jamie", address: "100 Sample Way, Unit 4", city: "Aspen", propType: "Condominium", yearBuilt: "1984", price: 2950000, sellers: "Example Seller Trust", buyers: "", mls: "", dash: "5101", coAgents: [], opened: "2026-11-09", listDate: "2026-11-20", expDate: "2027-05-31",
         items: {
-          listing_contract: st("approved", { file: "Listing Contract - signed.pdf" }),
-          dash_form: st("approved", { file: "Residential Listing Form (generated).pdf" }),
-          mls_form: st("submitted", { file: "MLS Input Form (generated).pdf" }),
-          info_form: st("rejected", { file: "Information Form.pdf", note: "Brochure titles and highlights are blank. Every line has to be complete before marketing can build the brochure." })
-        }, tasks: {}, extra: [],
-        log: [["Nov 9", "Jamie opened the listing"], ["Nov 10", "Front desk entered it in dash (#5101)"], ["Nov 12", "Petrina returned the Information Form"]] },
+          drafting: st("approved", { file: "Listing Contract Drafting Form (generated).pdf" }),
+          listing_contract: st("approved", { file: "LC50 Listing Contract - signed.pdf" }),
+          seller_adv: st("rejected", { file: "Seller Advisory.pdf", note: "This is the Vacant Land version. The property is a condo, so the seller needs to sign the Residential Seller Advisory." }),
+          dash_form: st("submitted", { file: "dash Residential Sale Listing (generated).pdf" })
+        }, tasks: {}, extra: [], changes: [],
+        log: [["Nov 9", "Jamie opened the listing"], ["Nov 10", "Front desk entered it in dash (#5101)"], ["Nov 12", "Petrina returned the Seller Advisory"]] },
       { id: 2, type: "seller", agent: "jamie", address: "42 Example Court", city: "Snowmass Village", propType: "Single family", yearBuilt: "1972", price: 4100000, sellers: "R. and K. Sample", buyers: "Placeholder Holdings LLC", mls: "190311", dash: "3877", coAgents: ["Morgan Reyes"], titleCo: "Land Title Guarantee", contractDate: "2026-10-28", closingDate: "2026-12-15", opened: "2026-10-28",
         items: {
-          uc_form: st("approved"), contract: st("approved", { file: "Contract + Counterproposal 1.pdf" }), listing_contract: st("approved", { file: "Listing Contract (from listing file).pdf" }), mls_sheet: st("approved"), brochure: st("approved"),
-          em_receipt: st("approved"), em_copy: st("submitted", { file: "EM wire confirmation.pdf" }), spd: st("approved"),
+          uc_sold: st("approved"), contract: st("approved", { file: "CBS1 + Counterproposal 1.pdf" }), listing_contract: st("approved", { file: "Listing Contract and Seller Advisory (from listing file).pdf" }),
+          em: st("submitted", { file: "EM receipt and wire confirmation.pdf" }), spd: st("approved"), title_commit: st("approved"),
           lbp: st("rejected", { file: "Lead Paint Disclosure.pdf", note: "Buyer's initials are missing on page 2." }),
-          inventory: st("na-req", { note: "Jamie: no personal property is included in the sale." })
+          inventory: st("na-req", { note: "Jamie: no personal property is included in the sale." }), referral: st("na"), dd_other: st("na")
         }, extra: [],
         log: [["Oct 28", "Jamie opened the deal"], ["Oct 29", "Front desk entered it in dash (#3877)"], ["Nov 12", "Petrina returned the Lead-Based Paint Disclosure"]] },
       { id: 3, type: "buyer", agent: "jamie", address: "7 Demo Ranch Road", city: "Carbondale", propType: "Vacant land", yearBuilt: "", price: 875000, sellers: "Outside listing seller", buyers: "T. Example", mls: "190455", dash: "", inHouse: false, coAgents: [], titleCo: "Title Company of the Rockies", contractDate: "2026-11-14", closingDate: "2027-01-08", opened: "2026-11-14",
-        items: { uc_form: st("submitted", { file: "Under Contract Form (generated).pdf" }), contract: st("submitted", { file: "Executed Contract.pdf" }) }, extra: [],
+        items: { uc_sold: st("submitted", { file: "Under Contract-Sold Checklist (generated).pdf" }), contract: st("submitted", { file: "Executed CBS1.pdf" }), buyer_agree: st("submitted", { file: "Exclusive Right-to-Buy (BC60).pdf" }) }, extra: [],
         log: [["Nov 14", "Jamie opened the deal"]] },
       { id: 4, type: "seller", agent: "jamie", address: "9 Placeholder Lane", city: "Basalt", propType: "Townhouse", yearBuilt: "2005", price: 1650000, sellers: "A. Sample", buyers: "J. and M. Example", mls: "190102", dash: "3860", linked: 5, coAgents: [], titleCo: "Land Title Guarantee", contractDate: "2026-10-15", closingDate: "2026-11-30", opened: "2026-10-15",
-        items: allApproved("tx", { closing_instr: st("missing"), closing_docs: st("missing"), funds: st("missing"), insp_obj: st("approved"), amend: st("na") }), extra: [],
+        items: allApproved("tx", Object.assign({}, OPT_NA, { closing_instr: st("missing"), closing_docs: st("missing"), funds: st("missing") })), extra: [],
         log: [["Oct 15", "Jamie opened a dual agency deal (linked to the buyer side)"]] },
       { id: 5, type: "buyer", agent: "jamie", address: "9 Placeholder Lane", city: "Basalt", propType: "Townhouse", yearBuilt: "2005", price: 1650000, sellers: "A. Sample", buyers: "J. and M. Example", mls: "190102", dash: "3861", linked: 4, inHouse: true, coAgents: [], titleCo: "Land Title Guarantee", contractDate: "2026-10-15", closingDate: "2026-11-30", opened: "2026-10-15",
-        items: allApproved("tx", { closing_instr: st("missing"), closing_docs: st("missing"), funds: st("missing"), amend: st("na") }), extra: [],
+        items: allApproved("tx", Object.assign({}, OPT_NA, { closing_instr: st("missing"), closing_docs: st("missing"), funds: st("missing") })), extra: [],
         log: [["Oct 15", "Jamie opened a dual agency deal (linked to the seller side)"]] },
       { id: 6, type: "buyer", agent: "jamie", address: "300 Mockup Mesa Drive", city: "Aspen", propType: "Single family", yearBuilt: "1995", price: 3400000, sold: 3325000, listPrice: 3450000, sellers: "Example Family LLC", buyers: "S. Placeholder", mls: "189870", dash: "3790", inHouse: false, coAgents: [], titleCo: "Title Company of the Rockies", contractDate: "2026-09-20", closingDate: "2026-11-10", opened: "2026-09-20",
-        items: allApproved("tx", { amend: st("na"), inventory: st("na") }), extra: [],
+        items: allApproved("tx", OPT_NA), extra: [],
         advice: { amount: 42000, date: "2026-11-13", file: "Title advice.pdf" },
         log: [["Nov 10", "Closed"], ["Nov 12", "Petrina approved the last document. File complete."], ["Nov 13", "Petrina uploaded the title advice ($42,000)"]] },
       { id: 7, type: "seller", agent: "morgan", address: "15 Template Trail", city: "Aspen", propType: "Single family", yearBuilt: "2012", price: 6200000, sold: 6050000, listPrice: 6200000, sellers: "Template Trust", buyers: "Example Buyer LLC", mls: "189655", dash: "3771", coAgents: [], titleCo: "Land Title Guarantee", contractDate: "2026-09-10", closingDate: "2026-11-06", opened: "2026-09-10",
-        items: allApproved("tx", { inventory: st("na") }), extra: [],
+        items: allApproved("tx", OPT_NA), extra: [],
         advice: { amount: 151250, date: "2026-11-09", file: "Title advice.pdf" },
-        crf: { status: "submitted", gross: 151250, adj: "", adjWhy: "", assirRefName: "", assirRef: 0, outRefName: "", outRef: 0, payTo: "Morgan Reyes", split: 0.85, submitted: "2026-11-13" },
+        crf: { status: "submitted", gross: 151250, adj: "", adjWhy: "", assirRefName: "", assirRef: 0, outRefName: "", outRef: 0, payTo: "Morgan Reyes", split: 0.85, financing: "Cash", concessions: "", submitted: "2026-11-13" },
         log: [["Nov 9", "Petrina uploaded the title advice"], ["Nov 13", "Morgan submitted the CRF"]] },
       { id: 8, type: "buyer", agent: "taylor", address: "88 Specimen Street", city: "Glenwood Springs", propType: "Single family", yearBuilt: "1965", price: 720000, sold: 705000, listPrice: 739000, sellers: "Outside seller", buyers: "D. Example", mls: "189544", dash: "3749", inHouse: false, coAgents: [], titleCo: "Stewart Title", contractDate: "2026-09-02", closingDate: "2026-11-04", opened: "2026-09-02",
-        items: allApproved("tx", { amend: st("na"), inventory: st("na") }), extra: [],
+        items: allApproved("tx", Object.assign({}, OPT_NA, { referral: st("approved") })), extra: [],
         advice: { amount: 17625, date: "2026-11-06", file: "Title advice.pdf" },
-        crf: { status: "tc", gross: 17625, adj: "", adjWhy: "", assirRefName: "Example Agent (20% referral)", assirRef: 3525, outRefName: "", outRef: 0, payTo: "Taylor Brooks Realty LLC", split: 0.8, submitted: "2026-11-10", tcApproved: "2026-11-11" },
-        log: [["Nov 10", "Taylor submitted the CRF"], ["Nov 11", "Petrina approved the CRF and sent it to accounting"]] },
+        crf: { status: "tc", gross: 17625, adj: "", adjWhy: "", assirRefName: "Example Agent (20% referral)", assirRef: 3525, outRefName: "", outRef: 0, payTo: "Taylor Brooks Realty LLC", split: 0.8, financing: "Loan", concessions: "$5,000", submitted: "2026-11-10", tcApproved: "2026-11-11" },
+        log: [["Nov 10", "Taylor submitted the CRF"], ["Nov 11", "MV transactions approved the CRF and sent it to accounting"]] },
       { id: 9, type: "seller", agent: "riley", address: "21 Example Ridge", city: "Snowmass Village", propType: "Condominium", yearBuilt: "1981", price: 1295000, sold: 1260000, listPrice: 1295000, sellers: "P. Sample", buyers: "Q. Example", mls: "189301", dash: "3702", coAgents: [], titleCo: "Land Title Guarantee", contractDate: "2026-08-20", closingDate: "2026-10-22", opened: "2026-08-20",
-        items: allApproved("tx", { inventory: st("na") }), extra: [],
+        items: allApproved("tx", OPT_NA), extra: [],
         advice: { amount: 31500, date: "2026-10-24", file: "Title advice.pdf" },
-        crf: { status: "paid", gross: 31500, adj: "", adjWhy: "", assirRefName: "", assirRef: 0, outRefName: "", outRef: 0, payTo: "Riley Chen", split: 0.8, submitted: "2026-10-25", tcApproved: "2026-10-26", acctApproved: "2026-10-27", paid: "2026-10-28" },
+        crf: { status: "paid", gross: 31500, adj: "", adjWhy: "", assirRefName: "", assirRef: 0, outRefName: "", outRef: 0, payTo: "Riley Chen", split: 0.8, financing: "Cash", concessions: "", submitted: "2026-10-25", tcApproved: "2026-10-26", acctApproved: "2026-10-27", paid: "2026-10-28" },
         log: [["Oct 28", "Accounting marked the commission paid"]] },
-      { id: 10, type: "listing", agent: "morgan", address: "5 Mockingbird Example Rd", city: "Woody Creek", propType: "Ranch / acreage", yearBuilt: "1998", price: 12500000, sellers: "Sample Ranch LLC", mls: "190480", dash: "5099", coAgents: [], opened: "2026-11-02",
-        items: allApproved("listing"), tasks: { 0: true, 1: true, 2: true, 3: false }, extra: [],
+      { id: 10, type: "listing", agent: "morgan", address: "5 Mockingbird Example Rd", city: "Woody Creek", propType: "Ranch / acreage", yearBuilt: "1998", price: 12500000, sellers: "Sample Ranch LLC", mls: "190480", dash: "5099", coAgents: [], opened: "2026-11-02", listDate: "2026-11-06", expDate: "2027-11-06",
+        items: allApproved("listing"), tasks: { 0: true, 1: true, 2: true, 3: true }, extra: [], changes: [],
         log: [["Nov 6", "All listing documents approved. Ready for MLS."]] },
-      { id: 11, type: "buyer", agent: "quinn", address: "60 Sample Spur", city: "Glenwood Springs", propType: "Townhouse", yearBuilt: "2019", price: 640000, sellers: "Outside seller", buyers: "E. Example", mls: "190200", dash: "3866", inHouse: false, coAgents: [], titleCo: "Stewart Title", contractDate: "2026-10-30", closingDate: "2026-12-12", opened: "2026-10-30",
-        items: { uc_form: st("approved"), contract: st("approved"), agency: st("approved"), em_receipt: st("approved"), em_copy: st("approved") }, extra: [],
-        log: [["Oct 30", "Quinn opened the deal"]] }
+      { id: 11, type: "buyer", agent: "morgan", address: "60 Sample Spur", city: "Basalt", propType: "Townhouse", yearBuilt: "2019", price: 640000, sellers: "Outside seller", buyers: "E. Example", mls: "190200", dash: "3866", inHouse: false, coAgents: [], titleCo: "Stewart Title", contractDate: "2026-10-30", closingDate: "2026-12-12", opened: "2026-10-30",
+        items: { uc_sold: st("approved"), contract: st("approved"), buyer_agree: st("approved"), buyer_adv: st("approved"), em: st("approved") }, extra: [],
+        terminated: "2026-11-15", log: [["Oct 30", "Morgan opened the deal"], ["Nov 15", "Morgan marked the contract as fell through"]] }
     ]
   };
 }
 
 let S;
-const KEY = "assir-deal-desk-mockup-v1";
+const KEY = "assir-deal-desk-mockup-v2";
 try { S = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch (e) { S = seed(); }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
@@ -358,11 +377,13 @@ const actor = () => ({ agent: "Jamie", assistant: "Casey", tc: "Petrina", frontd
 
 function defsFor(d) {
   const base = d.type === "listing" ? LISTING_ITEMS : TX_ITEMS;
-  return base.concat(d.extra || []);
+  return base.concat(d.terminated ? TERM_ITEMS : [], d.extra || []).map(def => typeof def.name === "function" ? Object.assign({}, def, { name: def.name(d) }) : def);
 }
 function itemsOf(d) {
   return defsFor(d).map(def => {
     if (def.cond && !def.cond(d)) return { def: def, s: { status: "auto-na" } };
+    const cur = d.items[def.key];
+    if (d.terminated && !def.keep && !(cur && ["approved", "submitted"].includes(cur.status))) return { def: Object.assign({}, def, { na: "Not needed: the contract fell through" }), s: { status: "auto-na" } };
     return { def: def, s: d.items[def.key] || { status: "missing" } };
   });
 }
@@ -385,10 +406,13 @@ function stage(d) {
   const p = progress(d);
   if (d.type === "listing") {
     if (!d.dash) return ["New: front desk entering in dash", "info"];
+    const last = (d.changes || []).slice(-1)[0];
+    if (last && ["Withdrawn", "Cancelled"].includes(last.type)) return [p.complete ? last.type : last.type + ": paperwork in progress", p.complete ? "muted" : "warn"];
     if (!p.complete) return [d.extra.length ? "Listing change in progress" : "Gathering documents", "warn"];
     const allTasks = OFFICE_TASKS.every((_, i) => d.tasks && d.tasks[i]);
     return allTasks ? ["Active on MLS", "ok"] : ["Ready for MLS", "ok"];
   }
+  if (d.terminated) return p.complete ? ["Fell through: file closed", "muted"] : ["Fell through: closing out file", "warn"];
   if (!d.dash) return ["New: front desk entering in dash", "info"];
   if (!p.complete) return ["Under contract", "warn"];
   if (!d.advice) return ["File complete: waiting on title advice", "info"];
@@ -430,7 +454,7 @@ function go(v) { S.views[S.role] = v; save(); render(); window.scrollTo(0, 0); }
 function visibleDeals() {
   if (S.role === "agent") return S.deals.filter(d => d.agent === "jamie");
   if (S.role === "assistant") return S.deals.filter(d => (S.team[d.agent] || []).includes("Casey Lin"));
-  if (S.role === "tc") return S.deals.filter(d => PEOPLE[d.agent].tc === "petrina");
+  if (S.role === "tc") return S.deals.filter(d => PEOPLE[d.agent].tc === "aspen");
   if (S.role === "accounting") return S.deals.filter(d => d.type !== "listing" && progress(d).complete);
   return S.deals;
 }
@@ -519,14 +543,14 @@ function renderDeal(d) {
     if (isAgentSide && ["missing", "rejected"].includes(it.status)) {
       acts += def.prefill ? `<button class="btn sm primary" data-act="prefill" data-id="${d.id}" data-key="${def.key}">Review and submit</button><button class="btn sm" data-act="upload" data-id="${d.id}" data-key="${def.key}">Upload PDF</button>`
                           : `<button class="btn sm primary" data-act="upload" data-id="${d.id}" data-key="${def.key}">${it.status === "rejected" ? "Upload corrected PDF" : "Upload PDF"}</button>`;
-      if (def.optional && it.status === "missing") acts += `<button class="btn sm" data-act="nareq" data-id="${d.id}" data-key="${def.key}">Doesn't apply</button>`;
+      if (it.status === "missing") acts += `<button class="btn sm" data-act="nareq" data-id="${d.id}" data-key="${def.key}">Doesn't apply</button>`;
     }
     if (isAgentSide && it.status === "submitted") acts += `<button class="btn sm" data-act="upload" data-id="${d.id}" data-key="${def.key}">Replace</button>`;
     if (isTc && it.status === "submitted") acts += `<button class="btn sm ok" data-act="approve" data-id="${d.id}" data-key="${def.key}">Approve</button><button class="btn sm danger" data-act="reject" data-id="${d.id}" data-key="${def.key}">Return to agent</button>`;
     if (isTc && it.status === "na-req") acts += `<button class="btn sm ok" data-act="approve-na" data-id="${d.id}" data-key="${def.key}">Agree, not needed</button><button class="btn sm danger" data-act="reject" data-id="${d.id}" data-key="${def.key}">It's needed</button>`;
     const fileLine = it.file && !["missing", "auto-na", "na", "na-req"].includes(it.status)
       ? `<div class="file">📄 ${esc(it.file)}${it.date ? " · " + fmtDate(it.date) : ""}${it.sharedFrom ? " · also filed to the linked deal" : ""}</div>` : "";
-    const note = it.status === "rejected" && it.note ? `<div class="note"><b>Petrina:</b> ${esc(it.note)}</div>`
+    const note = it.status === "rejected" && it.note ? `<div class="note"><b>${esc(TCS[PEOPLE[d.agent].tc].split(" (")[0])}:</b> ${esc(it.note)}</div>`
       : it.status === "na-req" && it.note ? `<div class="note info">${esc(it.note)}</div>` : "";
     const hint = it.status === "auto-na" ? def.na : def.hint || "";
     return `<div class="item ${["auto-na", "na"].includes(it.status) ? "na" : ""}">
@@ -541,7 +565,8 @@ function renderDeal(d) {
     side += `<div class="panel"><div class="panel-h"><h3>Office tasks</h3><span class="small muted">Done by the front desk</span></div><div class="panel-b">
       ${p.complete ? "" : `<p class="small muted" style="margin-bottom:10px">These start once every listing document is approved.</p>`}
       <div class="checks">${OFFICE_TASKS.map((t, i) => `<label><input type="checkbox" data-act="task" data-id="${d.id}" data-i="${i}" ${d.tasks && d.tasks[i] ? "checked" : ""} ${role === "frontdesk" && p.complete ? "" : "disabled"}> ${esc(t)}</label>`).join("")}</div>
-      ${isAgentSide && p.complete ? `<div style="margin-top:14px"><button class="btn sm" data-act="amend" data-id="${d.id}">Amend or extend this listing</button></div>` : ""}
+      ${isAgentSide && p.complete ? `<div style="margin-top:14px"><button class="btn sm" data-act="amend" data-id="${d.id}">Price change, extension or withdrawal</button></div>` : ""}
+      ${role === "frontdesk" && d.dash ? `<div style="margin-top:14px"><button class="btn sm" data-act="admin-email" data-id="${d.id}">Write admin email</button></div>` : ""}
     </div></div>`;
   } else {
     const c = d.crf;
@@ -563,7 +588,10 @@ function renderDeal(d) {
     if (role === "accounting" && c && c.status === "acct") action = `<button class="btn ok" data-act="paid" data-id="${d.id}">Mark commission paid</button>`;
     if (c && c.status !== "draft" && !action.includes("crf-review")) action += `<div style="margin-top:8px"><button class="linkbtn small" data-act="crf-view" data-id="${d.id}">View CRF</button></div>`;
     if (c && c.status === "returned" && c.returnNote) action = `<div class="note" style="margin-bottom:10px;font-size:.83rem;background:var(--bad-soft);color:var(--bad);padding:6px 10px;border-radius:4px"><b>Returned:</b> ${esc(c.returnNote)}</div>` + action;
-    side += `<div class="panel"><div class="panel-h"><h3>Getting paid</h3>${d.advice ? `<span class="small muted num">Advice: ${money(d.advice.amount)}</span>` : ""}</div><div class="panel-b">
+    if (isAgentSide && !d.terminated && !d.advice) action += `<div style="margin-top:12px"><button class="linkbtn small" data-act="fellthrough" data-id="${d.id}">Contract fell through?</button></div>`;
+    if (role === "frontdesk" && d.dash) action += `<div style="margin-top:12px"><button class="btn sm" data-act="admin-email" data-id="${d.id}">Write admin email</button></div>`;
+    if (d.terminated) side += `<div class="panel"><div class="panel-h"><h3>Fell through</h3><span class="small muted">${fmtDate(d.terminated)}</span></div><div class="panel-b"><p class="small">The contract was terminated. The file still needs the signed Notice to Terminate and Earnest Money Release, plus everything signed before termination. No commission is paid.</p>${role === "frontdesk" && d.dash ? `<div style="margin-top:12px"><button class="btn sm" data-act="admin-email" data-id="${d.id}">Write admin email</button></div>` : ""}</div></div>`;
+    else side += `<div class="panel"><div class="panel-h"><h3>Getting paid</h3>${d.advice ? `<span class="small muted num">Advice: ${money(d.advice.amount)}</span>` : ""}</div><div class="panel-b">
       <ol class="steps">${steps.map((x, i) => `<li class="${x[1] ? "done" : i === nowIdx ? "now" : ""}"><span class="dot"></span><span>${esc(x[0])}</span></li>`).join("")}</ol>
       ${action ? `<div style="margin-top:12px">${action}</div>` : ""}
     </div></div>`;
@@ -617,7 +645,7 @@ function renderTcHome() {
   else body = dealRows(list, { showAgent: true, tc: true });
 
   return `<div class="stack">
-    <div><h1>Good morning, Petrina</h1><p class="muted">You cover Jamie Alvarez, Morgan Reyes and Taylor Brooks in this example.</p></div>
+    <div><h1>Good morning, Petrina</h1><p class="muted">You run Aspen transactions (Aspentransactions@): every deal from the Aspen offices. SMV covers Snowmass Village; MV covers Basalt, Carbondale and Glenwood Springs.</p></div>
     <div class="attn">
       <div class="cell ${reviewItems.length ? "hot" : ""}"><div class="label">To review</div><div class="big num">${reviewItems.length}</div><div class="small muted">Uploads and N/A requests</div></div>
       <div class="cell"><div class="label">Title advice</div><div class="big num">${adviceNeeded.length}</div><div class="small muted">Complete files waiting on funds</div></div>
@@ -728,9 +756,10 @@ function newDealModal() {
     ["seller", "Under contract: seller side", "Our listing went under contract"],
     ["buyer", "Under contract: buyer side", "My buyer is under contract"],
     ["dual", "Dual agency", "I represent buyer and seller"],
+    ["commercial", "Commercial", "Coming soon"],
     ["rental", "Rental", "Coming soon"]
   ];
-  const body = `<div class="types" role="radiogroup" aria-label="Deal type">${types.map((t, i) => `<label class="${t[0] === "rental" ? "off" : ""}"><input type="radio" name="dtype" value="${t[0]}" ${i === 0 ? "checked" : ""} ${t[0] === "rental" ? "disabled" : ""}><b>${t[1]}</b><span>${t[2]}</span></label>`).join("")}</div>
+  const body = `<div class="types" role="radiogroup" aria-label="Deal type">${types.map((t, i) => `<label class="${["rental", "commercial"].includes(t[0]) ? "off" : ""}"><input type="radio" name="dtype" value="${t[0]}" ${i === 0 ? "checked" : ""} ${["rental", "commercial"].includes(t[0]) ? "disabled" : ""}><b>${t[1]}</b><span>${t[2]}</span></label>`).join("")}</div>
     <div class="fgrid">
       ${fld("nd-address", "Property address", "", { full: true, ph: "Street address and unit" })}
       ${fld("nd-city", "Town", "Aspen", { select: CITIES })}
@@ -738,6 +767,8 @@ function newDealModal() {
       ${fld("nd-year", "Year built", "", { ph: "e.g. 1998", type: "number" })}
       ${fld("nd-price", "Price", "", { ph: "List or contract price", type: "number" })}
       ${fld("nd-sellers", "Seller(s) legal name", "", { full: true })}
+      <div class="field listing-only"><label for="nd-list">List date</label><input id="nd-list" type="date"></div>
+      <div class="field listing-only"><label for="nd-exp">Expiration date</label><input id="nd-exp" type="date"></div>
       <div class="field full tx-only">${""}<label for="nd-buyers">Buyer(s) legal name</label><input id="nd-buyers"></div>
       <div class="field tx-only"><label for="nd-close">Closing date</label><input id="nd-close" type="date"></div>
       <div class="field tx-only"><label for="nd-title">Title company</label><select id="nd-title">${TITLE_COS.map(t => `<option>${t}</option>`).join("")}</select></div>
@@ -745,7 +776,7 @@ function newDealModal() {
       <div class="field tx-only"><label for="nd-inhouse">Is it an ASSIR listing?</label><select id="nd-inhouse"><option value="no">No, another brokerage's listing</option><option value="yes">Yes, our listing</option></select></div>
       ${fld("nd-co", "Co-agent on this deal (optional)", "", { ph: "Name of another ASSIR agent", full: true })}
     </div>
-    <div class="callout"><b>You type this once.</b> It fills in <span id="nd-fills"></span> so you never re-enter the same address, price or names. The front desk and your TC are notified when you save.</div>
+    <div class="callout"><b>You type this once.</b> It fills in <span id="nd-fills"></span> so you never re-enter the same address, price or names. <span id="nd-adv"></span> The front desk and your TC are notified when you save.</div>
     <p class="err" id="nd-err" hidden></p>`;
   modal("New deal", "Pick the kind of deal, then the basics.", body, `<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="create">Create deal</button>`, true);
   syncNewDeal();
@@ -753,16 +784,20 @@ function newDealModal() {
 function syncNewDeal() {
   const t = (document.querySelector("input[name=dtype]:checked") || {}).value;
   document.querySelectorAll(".tx-only").forEach(el => { el.hidden = t === "listing"; });
+  document.querySelectorAll(".listing-only").forEach(el => { el.hidden = t !== "listing"; });
   const ih = document.getElementById("nd-inhouse"); if (ih) ih.closest(".field").hidden = t !== "buyer";
-  const fills = t === "listing" ? ["Residential Listing Form (dash)", "MLS Input Form", "Information Form", "Listing Checklist"]
-    : ["Under Contract Form", "Commission Request Form", "Listing Checklist closing section"];
+  const pt = document.getElementById("nd-type"), land = pt && pt.value === "Vacant land", cat = land ? "Vacant Land" : "Residential";
+  const fills = t === "listing" ? ["Listing Contract Drafting Form", "dash Residential Sale Listing", "MLS Input Form (" + (land ? "RES Vacant Land" : pt && pt.value === "Fractional" ? "Fractional" : "Residential") + ")", "admin emails"]
+    : ["Under Contract/Sold Checklist", "Commission Request Form", "admin emails"];
+  const adv = t === "listing" ? "Seller Advisory (" + cat + ")" : t === "buyer" ? "Buyer Advisory (" + cat + ")" : t === "dual" ? "Seller and Buyer Advisory (" + cat + ")" : "";
+  const advEl = document.getElementById("nd-adv"); if (advEl) advEl.textContent = adv ? "Based on the property type, this deal needs the " + adv + "." : "";
   const el = document.getElementById("nd-fills"); if (el) el.innerHTML = fills.map(f => `<b>${esc(f)}</b>`).join(", ");
 }
 function createDeal() {
   const t = (document.querySelector("input[name=dtype]:checked") || {}).value;
   const address = val("nd-address");
   if (!address) { const e = $("#nd-err"); e.hidden = false; e.textContent = "Add the property address to create the deal."; return; }
-  const base = { agent: S.role === "assistant" ? "jamie" : "jamie", address: address, city: val("nd-city"), propType: val("nd-type"), yearBuilt: val("nd-year"), price: +val("nd-price") || null, sellers: val("nd-sellers") || "—", buyers: val("nd-buyers") || "—", mls: val("nd-mls"), dash: "", coAgents: val("nd-co") ? [val("nd-co")] : [], titleCo: val("nd-title"), closingDate: val("nd-close"), contractDate: TODAY, opened: TODAY, items: {}, extra: [], tasks: {} };
+  const base = { agent: S.role === "assistant" ? "jamie" : "jamie", address: address, city: val("nd-city"), propType: val("nd-type"), yearBuilt: val("nd-year"), price: +val("nd-price") || null, sellers: val("nd-sellers") || "—", buyers: val("nd-buyers") || "—", mls: val("nd-mls"), dash: "", coAgents: val("nd-co") ? [val("nd-co")] : [], titleCo: val("nd-title"), closingDate: val("nd-close"), contractDate: TODAY, opened: TODAY, listDate: val("nd-list"), expDate: val("nd-exp"), items: {}, extra: [], tasks: {}, changes: [] };
   const who = actor();
   let created;
   if (t === "dual") {
@@ -784,13 +819,16 @@ function prefillModal(d, key) {
   const def = defsFor(d).find(x => x.key === key);
   const rows = [["Property address", d.address], ["Town", d.city + ", CO"], ["Property type", d.propType], ["Year built", d.yearBuilt || "—"], [d.type === "listing" ? "List price" : "Contract price", money(d.price)], ["Seller(s)", d.sellers], ["Listing broker", agentName(d)]];
   if (d.type !== "listing") rows.push(["Buyer(s)", d.buyers], ["Closing date", fmtDate(d.closingDate)], ["Title company", d.titleCo]);
-  const extra = key === "info_form" ? [["Brochure front title", ""], ["Highlights (5)", ""], ["Showing instructions", ""]]
-    : key === "dash_form" ? [["Property style", ""], ["Features", ""], ["Property description", ""]]
-    : key === "mls_form" ? [["Zoning", ""], ["Parcel #", ""], ["Public remarks", ""]] : [["Contract date", fmtDate(d.contractDate)], ["Earnest money amount", ""]];
+  if (d.type === "listing") rows.push(["List date", fmtDate(d.listDate)], ["Expiration date", fmtDate(d.expDate)]);
+  if (key === "dash_form" && AREA[d.city]) rows.push(["Area description (standard text for " + d.city + ")", AREA[d.city]]);
+  const extra = key === "drafting" ? [["Commission: total / buyer agent / transaction broker", ""], ["Earnest money", ""], ["Additional provisions", ""]]
+    : key === "dash_form" ? [["Property subtype and style", ""], ["Features", ""], ["Property description, headline and highlights", ""]]
+    : key === "mls_form" ? [["Parcel # and legal description", ""], ["Zoning", ""], ["Showing instructions and public remarks", ""]]
+    : [["Agent source of buyer / seller", ""], ["Referral information (side, % or $, agent, company)", ""], ["Comp %", ""]];
   const body = `<div class="callout">${rows.length} fields are already filled in from this deal. Finish the rest and submit. The app builds the PDF and files it to Dropbox.</div>
     <div class="fgrid">${rows.map((r, i) => fld("pf" + i, r[0], r[1], { pre: true, ro: true })).join("")}
-    ${extra.map((r, i) => fld("pfx" + i, r[0], r[1], { full: true, area: /title|Highlights|description|remarks|instructions|Features/i.test(r[0]), ph: "In the real app, the rest of the form's fields go here" })).join("")}</div>`;
-  modal(def.name, esc(d.address) + " · " + esc(d.city), body, `<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="prefill-submit" data-id="${d.id}" data-key="${key}">Submit to Petrina</button>`, true);
+    ${extra.map((r, i) => fld("pfx" + i, r[0], r[1], { full: true, area: /provisions|highlights|description|remarks|instructions|Features/i.test(r[0]), ph: "In the real app, the rest of the form's fields go here" })).join("")}</div>`;
+  modal(def.name, esc(d.address) + " · " + esc(d.city), body, `<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="prefill-submit" data-id="${d.id}" data-key="${key}">Submit to your TC</button>`, true);
 }
 
 function rejectModal(d, key) {
@@ -816,6 +854,8 @@ function crfFields(d, c, ro) {
     ${fld("c-orn", "Outside referral: person's name", c.outRefName, { ro: ro })}${fld("c-or", "Outside referral amount", c.outRef || "", { type: "number", ro: ro, step: "0.01" })}
     ${fld("c-pay", "Make agent compensation payable to", c.payTo, { full: true, ro: ro, ph: "Company or individual, exactly as the check or wire should read" })}
     ${fld("c-split", "Agent split (from your agent profile)", Math.round(c.split * 100) + "%", { ro: true, pre: !ro })}
+    ${ro ? fld("c-fin", "Cash or loan", c.financing || "—", { ro: true }) : fld("c-fin", "Cash or loan", c.financing || "Cash", { select: ["Cash", "Loan"] })}
+    ${fld("c-conc", "Seller concessions", c.concessions || "", { ro: ro, ph: "None" })}
   </div>
   <div class="panel"><div class="panel-b"><div class="calc num" id="crf-calc"></div></div></div>`;
 }
@@ -830,12 +870,12 @@ function crfCalcHtml(c) {
     <span>ASSIR compensation</span><span>${money(k.assir)}</span>`;
 }
 function readCrf(c) {
-  return Object.assign({}, c, { adj: val("c-adj"), adjWhy: val("c-adjwhy"), assirRefName: val("c-arn"), assirRef: +val("c-ar") || 0, outRefName: val("c-orn"), outRef: +val("c-or") || 0, payTo: val("c-pay") });
+  return Object.assign({}, c, { adj: val("c-adj"), adjWhy: val("c-adjwhy"), assirRefName: val("c-arn"), assirRef: +val("c-ar") || 0, outRefName: val("c-orn"), outRef: +val("c-or") || 0, payTo: val("c-pay"), financing: val("c-fin"), concessions: val("c-conc") });
 }
 function crfModal(d) {
   const c = d.crf && d.crf.status !== "paid" ? d.crf : { status: "draft", gross: d.advice.amount, adj: "", adjWhy: "", assirRefName: "", assirRef: 0, outRefName: "", outRef: 0, payTo: agentName(d), split: PEOPLE[d.agent].split };
   modal("Commission Request Form", "Compensation Request Form – Sales · " + esc(d.address),
-    `<div class="callout">Most of this is filled in from the deal and the title advice. Add any referrals and who to pay. The math updates as you type. Submitting here counts as your approval of the CRF.</div>` + crfFields(d, c, false) +
+    `<div class="callout">Most of this is filled in from the deal and the title advice. Add any referrals, who to pay, and the closing details (cash or loan, seller concessions). The math updates as you type. Submitting here counts as your approval of the CRF.</div>` + crfFields(d, c, false) +
     `<p class="small muted">If there's a referral or a compensation reduction, upload the signed agreement to the deal too.</p><p class="err" id="crf-err" hidden></p>`,
     `<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="crf-submit" data-id="${d.id}">Submit to Petrina</button>`, true);
   $("#crf-calc").innerHTML = crfCalcHtml(c);
@@ -859,6 +899,41 @@ function adviceModal(d) {
     <div class="field full"><label for="adv-file">Advice PDF</label><input id="adv-file" type="file" accept="application/pdf,.pdf"></div></div>
     <p class="small muted">${esc(agentName(d).split(" ")[0])} gets an email and an app notice to fill out their commission request. The advice is filed to the deal's Dropbox folder.</p><p class="err" id="adv-err" hidden>Enter the amount from the advice.</p>`,
     `<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="advice-save" data-id="${d.id}">Save and notify agent</button>`);
+}
+function changeModal(d) {
+  modal("Change this listing", esc(d.address) + " · now " + money(d.price) + ", expires " + fmtDate(d.expDate),
+    `<div class="fgrid">${fld("ch-type", "What's changing?", "Price change", { select: CHANGE_TYPES, full: true })}
+    ${fld("ch-price", "New list price (if changing)", "", { type: "number" })}${fld("ch-exp", "New expiration date (if extending)", "", { type: "date" })}</div>
+    <p class="small muted">You'll upload the signed amendment, extension or authorization next. The front desk then updates MLS, dash, AJAX, the B2B and brochure, and sends the admin email.</p>`,
+    `<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="change-save" data-id="${d.id}">Start change</button>`);
+}
+function fellModal(d) {
+  modal("Contract fell through", esc(d.address) + " · " + TYPE_LABEL[d.type],
+    `<div class="fgrid">${fld("ft-date", "Termination date", TODAY, { type: "date" })}</div>
+    <p class="small">The checklist changes to what a terminated file needs: the signed Notice to Terminate and Earnest Money Release, plus everything signed so far. Your TC and the front desk are notified so MLS, AJAX and the admin email get updated.</p>`,
+    `<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="fell-save" data-id="${d.id}">Mark fell through</button>`);
+}
+function adminEmailModal(d) {
+  const last = (d.changes || []).slice(-1)[0];
+  let ev, rows = [["MLS#", d.mls || "—"], ["LEGAL", "(from assessor record)"], ["ADDRESS", d.address], ["CITY", d.city], ["SELLER", d.sellers], ["LIST BKR", agentName(d)]];
+  if (d.type === "listing") {
+    if (!last) { ev = "NEW LISTING"; rows.push(["LIST PRICE", money(d.price)], ["LIST DATE", fmtDate(d.listDate)], ["EXPIRATION DATE", fmtDate(d.expDate)]); }
+    else {
+      ev = last.type.toUpperCase();
+      if (last.newPrice) rows.push(["OLD PRICE", money(last.oldPrice)], ["NEW PRICE", money(last.newPrice)]); else rows.push(["LIST PRICE", money(d.price)]);
+      if (last.newExp) rows.push(["EXTENSION DATE", fmtDate(last.date)], ["EXPIRATION DATE", fmtDate(last.newExp)]);
+      else if (last.type === "Withdrawn") rows.push(["WITHDRAWAL DATE", fmtDate(last.date)]);
+      else if (last.type === "Cancelled") rows.push(["CANCELLED DATE", fmtDate(last.date)]);
+      else rows.push(["CHANGE DATE", fmtDate(last.date)]);
+    }
+  } else if (d.terminated) { ev = "FELL THROUGH"; rows.push(["LIST PRICE", money(d.listPrice || d.price)], ["DATE FELL OUT", fmtDate(d.terminated)]); }
+  else if (d.crf && d.crf.status === "paid" || d.sold) { ev = "CLOSED"; rows.push(["SELL BKR", d.type === "buyer" ? agentName(d) : "(from contract)"], ["LIST PRICE", money(d.listPrice || d.price)], ["SALE PRICE", money(d.sold || d.price)], ["CLOSE DATE", fmtDate(d.closingDate)]); }
+  else { ev = "UNDER CONTRACT"; rows.push(["LIST PRICE", money(d.listPrice || d.price)], ["U/C DATE", fmtDate(d.contractDate)], ["CLOSE DATE", fmtDate(d.closingDate)], ["TRANSACTION ID #", d.dash || "—"]); }
+  const w = Math.max.apply(null, rows.map(x => x[0].length)) + 3;
+  modal("Admin email", "Written from your template using this deal's details. Nothing to retype.",
+    `<div class="email"><div class="eh"><span><b>To:</b> Marketing; Accounting</span><span><b>Subject:</b> ${esc(ev)}: ${esc(d.address)}, ${esc(d.city)}</span></div>
+    <div class="eb" style="font-family:ui-monospace,Menlo,monospace;font-size:.8rem">${esc(ev)}\n${rows.map(x => esc(x[0].padEnd(w)) + esc(x[1])).join("\n")}</div></div>`,
+    `<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="admin-sent" data-id="${d.id}" data-ev="${esc(ev)}">Send</button>`, true);
 }
 function teamModal() {
   const list = S.team.jamie || [];
@@ -935,8 +1010,22 @@ document.addEventListener("click", e => {
       setItem(d, key, { status: d.items[key] && d.items[key].status === "na-req" ? "missing" : "rejected", note: note }); if (d.items[key].status === "missing") d.items[key].note = "";
       addLog(d, `Petrina returned the ${def.name}: ${note}`); closeModal(); save(); render(); toast(agentName(d).split(" ")[0] + " was emailed with your note."); break; }
     case "dash": { const v = val("dash-" + d.id); if (!v) { toast("Type the dash transaction number first."); return; } d.dash = v; addLog(d, `${actor()} entered it in dash (#${v})`); save(); render(); toast("Saved. The deal is out of the dash queue."); break; }
-    case "amend": d.extra.push({ key: "amend" + (d.extra.length + 1), name: "Listing Amendment/Extension" + (d.extra.length ? " #" + (d.extra.length + 1) : ""), hint: "Signed amendment or extension. The office tasks will be redone for the change." });
-      OFFICE_TASKS.forEach((_, i) => { if (i !== 7) d.tasks[i] = false; }); addLog(d, `${actor()} started a listing change`); save(); render(); toast("Change started. Upload the signed amendment or extension."); break;
+    case "amend": changeModal(d); break;
+    case "change-save": {
+      const type = val("ch-type"), np = +val("ch-price") || null, ne = val("ch-exp");
+      const n = (d.changes = d.changes || []).length + 1;
+      const docName = ["Withdrawn", "Cancelled"].includes(type) ? "Seller authorization to " + (type === "Withdrawn" ? "withdraw" : "cancel") + " listing" : "Listing amendment: " + type.toLowerCase();
+      d.changes.push({ type: type, date: TODAY, oldPrice: d.price, newPrice: np, oldExp: d.expDate, newExp: ne });
+      if (np) d.price = np; if (ne) d.expDate = ne;
+      const ds = TODAY.slice(5, 7).replace(/^0/, "") + "." + TODAY.slice(8).replace(/^0/, "") + "." + TODAY.slice(0, 4);
+      d.extra.push({ key: "chg" + n, name: docName, hint: "Filed as: EX Amend." + type + "." + ds + ".pdf" });
+      CHANGE_TASKS.forEach(i => { d.tasks[i] = false; });
+      addLog(d, `${actor()} started a listing change: ${type}${np ? " to " + money(np) : ""}${ne ? ", expires " + fmtDate(ne) : ""}`);
+      closeModal(); save(); render(); toast("Change started. Upload the signed document; the front desk redoes MLS, dash, AJAX, B2B, brochure and the admin email."); break; }
+    case "fellthrough": fellModal(d); break;
+    case "fell-save": { d.terminated = val("ft-date") || TODAY; addLog(d, `${actor()} marked the contract as fell through`); closeModal(); save(); render(); toast("Marked fell through. Upload the Notice to Terminate and Earnest Money Release."); break; }
+    case "admin-email": adminEmailModal(d); break;
+    case "admin-sent": addLog(d, `${actor()} sent the admin email (${t.dataset.ev})`); if (d.type === "listing") { d.tasks[7] = true; } closeModal(); save(); render(); toast("Admin email sent to Marketing and Accounting."); break;
     case "advice": adviceModal(d); break;
     case "advice-save": { const amt = +val("adv-amt"); if (!amt) { $("#adv-err").hidden = false; return; } const f = $("#adv-file").files[0];
       d.advice = { amount: amt, date: val("adv-date") || TODAY, file: f ? f.name : "Title advice.pdf" }; addLog(d, `Petrina uploaded the title advice (${money(amt)})`); closeModal(); save(); render(); toast(agentName(d).split(" ")[0] + " was told to submit their commission request."); break; }
@@ -956,7 +1045,7 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("change", e => {
   const t = e.target;
-  if (t.name === "dtype") syncNewDeal();
+  if (t.name === "dtype" || t.id === "nd-type") syncNewDeal();
   if (t.dataset && t.dataset.act === "task") { const d = deal(t.dataset.id); d.tasks[t.dataset.i] = t.checked; addLog(d, `${actor()} ${t.checked ? "checked" : "unchecked"} "${OFFICE_TASKS[t.dataset.i]}"`); save(); render(); }
   if (t.dataset && t.dataset.act === "office") { S.views.leadership = { name: "home", office: t.value }; save(); render(); }
   if (t.id === "file-picker" && pendingUpload) {
