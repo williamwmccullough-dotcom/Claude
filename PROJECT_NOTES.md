@@ -143,6 +143,18 @@ Screenshots from AJAX (Brokerage Engine). Examples contained real listings and p
 - **AJAX already does document tracking and review for listings.** Before building, confirm what AJAX (Brokerage Engine) offers for transactions, compliance review and commissions, and whether it has an API or Dropbox integration.
 - Admin emails go to **Marketing and Accounting**.
 
+## Current forms — Transaction (received Nov 17, 2026)
+1. **Under Contract/Sold Checklist (7.2.2026)** — 1 page, **fillable (78 fields)**. Agent submits at contract to the office contract coordinator inbox: **Aspentransactions@**, **SMVtransactions@**, **MVtransactions@** (aspensnowmasssir.com).
+   - Agent intake (blue sections): listing agent/company, selling agent/company, seller, buyer, address, legal, list price, contract price, comp %, MLS #, title company, U/C date, closing date, agent source of seller/buyer, referral info (seller/buyer side, % or $, agent/individual, company).
+   - Attach at contract: buyer agency/representation + Buyer Advisory **or** broker disclosure; compensation agreement (if buy side, as applicable); contract/counter; referral form.
+   - Staff at U/C: contract in file; confirm broker changed FlexMLS status; AJAX entry (list side enters if ASSIR listing, else enter transaction); AJAX U/C info and DASH #; verify commission %; verify year built for lead paint (assessor record); closing date into Outlook; **CRF obtained or created and sent to broker(s)**; broker approval by email or signature.
+   - Staff when sold: CRF to accounting **upon audit**; email update; confirm MLS status; AJAX updated by accounting; all docs uploaded to AJAX; save to RE folder; copy of broker check.
+   - **Fell through:** termination date, EMR (earnest money release) and NTT (notice to terminate), MLS status, AJAX status, email update, TERM file to RE drive, back-on-market B2B to AJAX.
+   - Broker after closing: closed date, sold price, cash or loan, seller concessions, then the closed file.
+   - **Closed file documents** (* = required): broker disclosure or buyer agency + Buyer Advisory* (n/a if our listing); listing contract + Seller Advisory*; change of status; MLS/assessor; title commitment*; copy of earnest money/wire; Source of Water Addendum*; closing documents from title; Square Footage Disclosure* (not vacant land); CTMe closing instructions*; Seller's Property Disclosure*; closing funds check/wire; inspection objection (and report) and resolution*; copy of broker commission check; other due diligence docs; copy of CRF; inventory list; Lead-Based Paint Disclosure* (built before 1978); counterproposal/contract*; amend/extends*; this checklist.
+2. **New version CRF – Sales (.xls)** — same fields and math as before (gross − referrals → 5% Sotheby's/admin → × agent split = net; remainder = ASSIR). Broker approves via CTMe or email. Attach signed referral agreement if applicable.
+3. **Asst New Trans Checklist (AJAX)** — agent/assistant reminders: send contract and closing instructions to title; generate seller disclosures (lead paint, seller's property disclosure, square footage, Source of Water Addendum, closing instructions); dates and deadlines to all parties; submit Under Contract Form; obtain earnest money receipt.
+
 ## Mockup
 - `mockup/index.html` — clickable prototype with example data (published as a private artifact).
 
