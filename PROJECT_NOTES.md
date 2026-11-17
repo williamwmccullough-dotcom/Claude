@@ -121,6 +121,16 @@ Kept out of the repo because the examples contain real client data. Summarized h
    - **Buyer Transaction-Broker Listing Contract (Non-Exclusive)** (Cox Peterson, CP-9-26) — 3 pages, not fillable.
 - Likely replaces the old "Agency Disclosure or Buyer Agency Contract" item on buyer-side deals (confirm).
 
+## Current checklists — Agent/assistant new listing (received Nov 17, 2026)
+1. **Assistant New AJAX Listing Checklist** — a task workflow inside **AJAX (Brokerage Engine)**, the system ASSIR uses for listing marketing. Tasks: vendor photo shoot; connect listing broker to AJAX listing (photographer link, document list email, photo gallery URL); add features from the dash form; submit listing video to marketing (if any); complete MLS draft, get approval, make active, add MLS # to AJAX; submit for Good-to-Launch; complete B2B and brochure and upload to the Seller Marketing Report; **add all listing documents, amendments and disclosures to the AJAX Document List**.
+2. **New Listing Checklist (2023, fillable, 32 fields)** — listing agent, seller name/email, legal description, address, price, MLS #, list and expiration dates. Tasks: assessor record PDF to AJAX; executed listing agreement to AJAX; enter MLS (full report PDF to AJAX); photos to P drive; enter AJAX; B2B and brochure to AJAX; email update to ASSIR Marketing; new listing update to broker/seller (Basalt office); ListTrac for marketing report; schedule AJAX seller report; broker caravan tour; virtual tour to MLS and AJAX; mark AJAX tasks complete.
+   - Front desk, withdrawn/cancel: file created on broker T drive, seller addendum, authorization to reduce commission (from a named manager if needed), brochure file, date WD/cancel, email update, authorization, update MLS and AJAX.
+
+### Takeaways
+- **AJAX already holds listing documents** (Document List) and runs marketing tasks. Need to decide how Deal Desk relates to AJAX so agents don't upload twice.
+- Marketing/launch tasks (photos, video, B2B, brochure, caravan, ListTrac, seller reports) live in AJAX. Deal Desk should stay focused on the **compliance document package**, and at most show front desk "entered in dash/MLS/AJAX" checkmarks.
+- Files are stored in several places today: AJAX, P drive, broker T drive, and Dropbox.
+
 ## Mockup
 - `mockup/index.html` — clickable prototype with example data (published as a private artifact).
 
