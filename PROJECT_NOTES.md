@@ -102,6 +102,17 @@ Kept out of the repo because the examples contain real client data. Summarized h
    - Commercial Sale adds: inside city limits, condominiumized, building sqft, occupant type, # units, business name, inventory, ceiling heights, N.O.I., total expenses.
    - Commercial Land adds: original list price, # units allowed, PUD.
    - Implication: commercial listings are sales too; confirm whether commercial is in phase 1.
+3. **Listing Contract Drafting Form** (1 page, fillable, 18 fields): seller, property address, legal/subdivision, listing broker, start and end dates, commission (total, buyer agent, transaction broker), price, earnest money, furnished, parking and storage, association dues, additional provisions. Seller agency vs. transaction broker.
+4. **Exclusive Right-to-Sell Listing Contract (LC50)** — Colorado Real Estate Commission form, mandatory from Jan 1, 2026. 11 pages, **fillable (173 fields)**.
+5. **Seller Advisory** (Cox Peterson LLC for ASSIR, CP-8-26) — three versions by property type: **Residential** (6 pp), **Vacant Land** (5 pp), **Commercial** (5 pp). Not fillable. Header: seller, property, broker, brokerage firm. Covers confidential-information consent and other disclosures.
+6. **Amend/Extend Checklist** — per change: date, type of change, saved to folder named `EX Amend.<what changed>.<M.D.YYYY>` (e.g. price change, expiration date, terms), then office tasks: **MLS, DASH, Foundation, Admin Email, B2B, Brochure**.
+7. **Admin Email Template** — one block per listing event, each with MLS #, legal, address, city, seller, list broker, price and an event date: New Listing, New/Old Listing (old and new MLS #), Extended, BOM/Extended, Price Change/Extended, Price Change, Expired, Withdrawn, BOM (back on market), BOM/Price Change, Cancelled, Under Contract (U/C date, close date, transaction ID), Fell Through/BOM, Fell Through, Fell Through/Withdrawn, Closed (sell broker, sale price, close date). The app can write these automatically from deal data.
+8. **Area Descriptions** — standard paragraph per town (Aspen, Snowmass Village, Basalt, Carbondale, Glenwood Springs, ...). The app can drop the right one into the dash "Area Description" based on the town.
+
+### Implied new-listing package (to confirm)
+- Agent: Listing Contract Drafting Form → signed ERTS Listing Contract (LC50) → signed Seller Advisory (version by property type) → dash listing form → MLS input form (version by property type).
+- Front desk: enter in dash and MLS, Foundation, B2B, brochure, admin email; same set again for each amend/extend.
+- Property type drives which MLS form and which Seller Advisory are required.
 
 ## Mockup
 - `mockup/index.html` — clickable prototype with example data (published as a private artifact).
