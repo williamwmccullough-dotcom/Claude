@@ -93,6 +93,16 @@ Kept out of the repo because the examples contain real client data. Summarized h
    - Overlaps with other forms: address, price, beds/baths, taxes, description/highlights, seller names, showing info. Candidates for type-once.
    - Oddity: "Brand Programs" lists ERA options (ERA Distinctive Properties, ERA Home Protection Plan, Gold Star), not SIR. Ask owner.
 
+2. **MLS Input Forms (Aspen Glenwood MLS)** — five versions, chosen by property type: **Residential** (4 pp), **RES Vacant Land** (3 pp), **Fractional** (4 pp), **Commercial Sale** (3 pp), **Commercial Land** (3 pp).
+   - **Not fillable PDFs** (0 form fields). The app would collect this information as an online form; it can then print a matching PDF or simply hand the data to the front desk for MLS entry.
+   - Shared core on all five: listing member, co-listing agent, address (street #, direction, name, suffix, unit, city, state, zip, county, country, parcel #), type, major area/area, asking price, listing and expiration dates, short sale/REO/auction/foreclosure, agency, seller/owner licensed, member association, deeds, seller's name, zoning, acres/lot sqft, sub/loc, legal, directions, metro tax district, taxes and tax year, transfer tax, HOA/association fees, special assessments, earnest money and payable to, HOA management contact, financing remarks, seller will trade, public remarks, addendum, showing instructions, seller internet opt-outs.
+   - Residential adds: beds/baths, garage, furnished, square footage breakdown, stories, primary bedroom on main, loft/den/bonus, short-termable, year built/remodeled, ADU, right of first refusal, new construction/ARC/plans transferable, energy programs.
+   - Vacant Land adds: sub-type, development approved, ARC, plans transferable, ADU allowed, FAR and allowable FAR.
+   - Fractional adds: ownership interest, rotation system, vacation trading, seasonal interest, floating unit, unit faces.
+   - Commercial Sale adds: inside city limits, condominiumized, building sqft, occupant type, # units, business name, inventory, ceiling heights, N.O.I., total expenses.
+   - Commercial Land adds: original list price, # units allowed, PUD.
+   - Implication: commercial listings are sales too; confirm whether commercial is in phase 1.
+
 ## Mockup
 - `mockup/index.html` — clickable prototype with example data (published as a private artifact).
 
