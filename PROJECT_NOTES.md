@@ -155,6 +155,13 @@ Screenshots from AJAX (Brokerage Engine). Examples contained real listings and p
 2. **New version CRF – Sales (.xls)** — same fields and math as before (gross − referrals → 5% Sotheby's/admin → × agent split = net; remainder = ASSIR). Broker approves via CTMe or email. Attach signed referral agreement if applicable.
 3. **Asst New Trans Checklist (AJAX)** — agent/assistant reminders: send contract and closing instructions to title; generate seller disclosures (lead paint, seller's property disclosure, square footage, Source of Water Addendum, closing instructions); dates and deadlines to all parties; submit Under Contract Form; obtain earnest money receipt.
 
+## Current forms — Contract (received Nov 17, 2026; final set)
+1. **Contract to Buy and Sell Real Estate (Residential), CBS1** — CREC form, mandatory from Jan 1, 2026. 20 pages, **fillable (311 fields)** including the dates-and-deadlines table, price, parties, title, closing. If agents upload the filled (not flattened/scanned) PDF, the app could read these fields to pre-fill the deal and deadlines.
+2. **Counterproposal** — 3 pages, fillable (191 fields).
+- Contract references Seller's Property Disclosure **or Source of Water Addendum**, and the Lead-Based Paint Disclosure deadlines (§10).
+
+All documents received as of Nov 17, 2026. Next: rebuild the mockup's checklists from these.
+
 ## Mockup
 - `mockup/index.html` — clickable prototype with example data (published as a private artifact).
 
