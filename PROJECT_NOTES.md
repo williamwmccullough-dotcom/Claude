@@ -86,6 +86,13 @@ Kept out of the repo because the examples contain real client data. Summarized h
   - gross less referrals → Sotheby's/admin 5% → remainder × agent split = net to agent; rest = ASSIR compensation.
   - Payable-to name, requested by. Broker must approve (signature or email). Attach referral or compensation reduction agreements.
 
+## Current forms (received Nov 17, 2026) — New Listing package (1 of 4 messages)
+1. **DASH Residential Sale Listing (SIR)** — 11 pages, **fillable PDF (943 fields)**, so the app can fill it automatically.
+   - Required (✓): property subtype, property style, country, address line 1, city, state, zip, listing office, list price, MLS ID, list date (or anticipated list date if prelisting), expiration date, bedrooms, sales associate/team name, English property description.
+   - Sections: essentials (subtype, style), location, listing info (prelisting, foreclosure, short sale, display and showing options), open houses, property info (beds/baths, building area, lot, taxes), sales associate, remarks (description, area description, directions, headline, 6 highlights, location, owner quote, transportation, zoning), long feature checklists, property details (year built/renovated, parking, zoning, tax roll #), geographic location, rooms, floors, schools, seller info (type, names, entity, contact, address), contact details, internal notes, property fees.
+   - Overlaps with other forms: address, price, beds/baths, taxes, description/highlights, seller names, showing info. Candidates for type-once.
+   - Oddity: "Brand Programs" lists ERA options (ERA Distinctive Properties, ERA Home Protection Plan, Gold Star), not SIR. Ask owner.
+
 ## Mockup
 - `mockup/index.html` — clickable prototype with example data (published as a private artifact).
 
