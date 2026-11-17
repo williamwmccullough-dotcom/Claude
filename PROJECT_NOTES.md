@@ -131,6 +131,18 @@ Kept out of the repo because the examples contain real client data. Summarized h
 - Marketing/launch tasks (photos, video, B2B, brochure, caravan, ListTrac, seller reports) live in AJAX. Deal Desk should stay focused on the **compliance document package**, and at most show front desk "entered in dash/MLS/AJAX" checkmarks.
 - Files are stored in several places today: AJAX, P drive, broker T drive, and Dropbox.
 
+## Current checklists — Admin (received Nov 17, 2026)
+Screenshots from AJAX (Brokerage Engine). Examples contained real listings and people; not recorded here.
+1. **Admin New AJAX Listing Checklist** — collect listing data from the listing broker (AJAX's Document Section can email the MLS, DASH and marketing forms to the broker); vendor photo shoot; connect broker to AJAX listing; add features from dash form; complete MLS draft, approve, make active, add MLS # to AJAX; listing video to marketing; submit for Good-to-Launch; order B2B; create brochure.
+2. **Admin Active Listing Checklist** — send marketing new-listing email; showing instructions into MLS, ShowingTime and AJAX; schedule AJAX seller marketing report; schedule ListTrac activity report; in-office file for printed brochures; caravan tour; B2B as listing milestone.
+3. **List Price Change Admin Checklist** — confirm new price; update MLS and AJAX; B2B; update brochure (online and print); **send admin email to Marketing and Accounting**; B2B milestone.
+4. New Listing Checklist 2023 — same file as before.
+
+### What the AJAX screens show
+- Each AJAX listing has a **Listing Documents** section with per-document statuses (Done, Not uploaded, Pending, Missing, Uploaded/Review), plus tasks with requestor/assignee/status, an activity log, and the office.
+- **AJAX already does document tracking and review for listings.** Before building, confirm what AJAX (Brokerage Engine) offers for transactions, compliance review and commissions, and whether it has an API or Dropbox integration.
+- Admin emails go to **Marketing and Accounting**.
+
 ## Mockup
 - `mockup/index.html` — clickable prototype with example data (published as a private artifact).
 
