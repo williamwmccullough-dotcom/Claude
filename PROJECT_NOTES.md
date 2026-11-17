@@ -114,6 +114,13 @@ Kept out of the repo because the examples contain real client data. Summarized h
 - Front desk: enter in dash and MLS, Foundation, B2B, brochure, admin email; same set again for each amend/extend.
 - Property type drives which MLS form and which Seller Advisory are required.
 
+## Current forms — Buyer contracts (received Nov 17, 2026)
+1. **Buyer Advisory** (Cox Peterson for ASSIR, CP-8-26) — three versions by property type: **Residential** (9 pp), **Vacant Land** (7 pp), **Commercial** (8 pp). Not fillable. Header: buyer, broker, brokerage firm.
+2. **Buyer agreement — one of:**
+   - **Exclusive Right-to-Buy Listing Contract (BC60)** — CREC form, mandatory from Jan 1, 2026. 7 pages, **fillable (93 fields)**.
+   - **Buyer Transaction-Broker Listing Contract (Non-Exclusive)** (Cox Peterson, CP-9-26) — 3 pages, not fillable.
+- Likely replaces the old "Agency Disclosure or Buyer Agency Contract" item on buyer-side deals (confirm).
+
 ## Mockup
 - `mockup/index.html` — clickable prototype with example data (published as a private artifact).
 
