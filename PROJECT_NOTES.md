@@ -66,6 +66,13 @@ Running record of decisions and context so every session starts from the same pl
 ## Notifications
 - Email and in-app reminders, **every other day**, listing the missing and rejected documents.
 
+## Decisions (Nov 17, 2026)
+- **CRF is filled out by the agent after title funds arrive**, never at contract. Keep it that way unless the owner says otherwise.
+- **Transaction routing:** three inboxes/coordinators. **Aspen** → Aspen offices; **SMV** → Snowmass Village; **MV** → Basalt, Carbondale and Glenwood Springs.
+- **Phase 1 = residential and land.** Commercial and rentals get "coming soon" placeholders.
+- **Buyer agreement + Buyer Advisory are required on every buyer-side deal**, including when it's our listing.
+- File storage: ASSIR has an internal server as well as Dropbox. Owner to clarify which is the system of record.
+
 ## Decisions
 - Owner owns, hosts and pays for the app (corporate card).
 - Start small (MVP), pilot with a few agents, expect bugs early.
